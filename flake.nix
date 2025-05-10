@@ -20,6 +20,22 @@
         pkgs = import nixpkgs {
           inherit system overlays;
         };
+        package = pkgs.rustPlatform.buildRustPackage {
+          pname = "dev-tools";
+          version = "0.1.0";
+          src = ./.;
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+          nativeBuildInputs = [
+            pkgs.rust-bin.beta.latest.default
+          ];
+          buildInputs = [ ];
+          checkPhase = ''
+            cargo test --all-features
+          '';
+        };
+
       in
       {
         devShells.default =
@@ -29,11 +45,16 @@
               nil
               nixfmt-rfc-style
               rust-bin.beta.latest.default
+              # rust-bin.stable.latest.default
               rust-analyzer
               rustfmt
-              taplo # TOML LSP and formatter
+              taplo
             ];
           };
+        packages = {
+          # dev-tools = package;
+          default = package;
+        };
       }
     );
 }

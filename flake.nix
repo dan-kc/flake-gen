@@ -1,57 +1,57 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
     {
-      self,
       nixpkgs,
-      rust-overlay,
+      fenix,
       flake-utils,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        overlays = [ (import rust-overlay) ];
+        overlays = [ fenix.overlays.default ]; # Adds nightly rust analyser
         pkgs = import nixpkgs {
           inherit system overlays;
         };
-        package = pkgs.rustPlatform.buildRustPackage {
+        toolchain = fenix.packages.${system}.minimal.toolchain;
+        rustPlatform = pkgs.makeRustPlatform {
+          cargo = toolchain;
+          rustc = toolchain;
+        };
+        package = rustPlatform.buildRustPackage {
           pname = "dev-tools";
           version = "0.1.0";
           src = ./.;
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
-          nativeBuildInputs = [
-            pkgs.rust-bin.stable.latest.default
-          ];
-          buildInputs = [ ];
-          checkPhase = ''
-            cargo test --all-features
-          '';
+          cargoLock.lockFile = ./Cargo.lock;
         };
-
       in
       {
         devShells.default =
           with pkgs;
           mkShell {
             buildInputs = [
+              (fenix.packages.${system}.complete.withComponents [
+                "cargo"
+                "clippy"
+                "rustc"
+                "rustfmt"
+              ])
+              rust-analyzer-nightly
               nil
               nixfmt-rfc-style
-              rust-bin.stable.latest.default
-              rust-analyzer
-              rustfmt
               taplo
             ];
           };
         packages = {
-          # dev-tools = package;
           default = package;
         };
       }

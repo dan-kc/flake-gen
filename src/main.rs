@@ -25,6 +25,7 @@ impl std::fmt::Display for Language {
 }
 
 #[derive(Debug)]
+// #[allow(dead_code)]
 enum Error {
     Io(std::io::Error),
     NixFileAlreadyExists,

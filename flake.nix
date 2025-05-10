@@ -28,7 +28,7 @@
             lockFile = ./Cargo.lock;
           };
           nativeBuildInputs = [
-            pkgs.rust-bin.beta.latest.default
+            pkgs.rust-bin.stable.latest.default
           ];
           buildInputs = [ ];
           checkPhase = ''
@@ -44,8 +44,7 @@
             buildInputs = [
               nil
               nixfmt-rfc-style
-              rust-bin.beta.latest.default
-              # rust-bin.stable.latest.default
+              rust-bin.stable.latest.default
               rust-analyzer
               rustfmt
               taplo

@@ -25,7 +25,7 @@ impl std::fmt::Display for Language {
 }
 
 #[derive(Debug)]
-// #[allow(dead_code)]
+#[allow(dead_code)]
 enum Error {
     Io(std::io::Error),
     NixFileAlreadyExists,
@@ -41,6 +41,12 @@ fn get_new_file_paths(base_path: Utf8PathBuf) -> (Utf8PathBuf, Utf8PathBuf) {
 }
 
 fn main() -> Result<(), Error> {
+    let templates_dir =
+        std::env::var("TEMPLATES_DIR").expect("TEMPLATES_DIR environment variable not set.");
+
+    let template_path = std::path::PathBuf::from(templates_dir);
+    println!("Looking for template at: {:?}", template_path);
+
     let cli = Cli::parse();
 
     let (flake_path, envrc_path) = get_new_file_paths(cli.path);
@@ -53,7 +59,16 @@ fn main() -> Result<(), Error> {
 
     // If not then create it
     // Get the template filepaths
-    // let executable_path = std::env::current_exe()?; // Returns a Result<PathBuf, std::io::Error>
+    match std::env::current_exe() {
+        Ok(exe_path) => {
+            println!("Path to the current executable: {:?}", exe_path);
+            // Note: Navigating from here to find related files in the Nix store
+            // is unreliable due to the structure of the Nix store.
+        }
+        Err(e) => {
+            eprintln!("Failed to get current executable path: {}", e);
+        }
+    }
     // file_namematch cli.lang {
     //     None => {}
     //     Some(lang) => {}

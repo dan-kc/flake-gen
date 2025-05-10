@@ -27,14 +27,20 @@
           cargo = toolchain;
           rustc = toolchain;
         };
+        pname = "dev-tools";
         package = rustPlatform.buildRustPackage {
-          pname = "dev-tools";
+          inherit pname;
           version = "0.1.0";
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
+          nativeBuildInputs = [ pkgs.makeWrapper ];
           postInstall = ''
-            mkdir -p $out/templates
-            cp ./templates/* $out/templates
+            mkdir -p $out/share/${pname}/templates
+            cp ./templates/* $out/share/${pname}/templates
+          '';
+          postFixup = ''
+            wrapProgram $out/bin/${pname} \
+              --set TEMPLATES_DIR "$out/share/${pname}/templates"
           '';
         };
       in

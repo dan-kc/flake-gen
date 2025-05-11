@@ -33,6 +33,15 @@
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
           nativeBuildInputs = [ pkgs.makeWrapper ];
+          buildInputs = [
+            # You might need a simple package here to provide the env var
+            # Or you can construct a derivation that just sets the env var
+            # A common way is to create a dummy package that just sets the env var
+            # Let's create one inline for simplicity here.
+            (pkgs.writeText "set-templates-dir" ''
+              export TEMPLATES_DIR=${./templates}
+            '')
+          ];
           postInstall = ''
             mkdir -p $out/share/${pname}/templates
             cp ./templates/* $out/share/${pname}/templates
@@ -60,9 +69,9 @@
               nodePackages.prettier
               taplo
             ];
-            env = {
-              TEMPLATES_DIR = "./templates";
-            };
+            # env = {
+            #   TEMPLATES_DIR = "./templates";
+            # };
           };
         packages.default = package;
       }

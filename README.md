@@ -53,4 +53,4 @@ This project is only available via nix flakes.
 
 ## Development
 
-Because cargo test tests againt the built binary, we must run cargo build before cargo test for accurate testing.
+Because `cargo test` tests against the built binary, we must run cargo build before cargo test for accurate testing.

@@ -45,9 +45,12 @@ This project is only available via nix flakes.
   ];
 ```
 
-
 ## Supported languages
 
 - rust
 - go
 - python (working on it)
+
+## Development
+
+Because cargo test tests againt the built binary, we must run cargo build before cargo test for accurate testing.

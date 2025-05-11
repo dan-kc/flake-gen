@@ -1,5 +1,6 @@
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
+use strum::EnumIter;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -9,7 +10,7 @@ struct Cli {
     path: Utf8PathBuf,
 }
 
-#[derive(ValueEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug, EnumIter)]
 enum Language {
     Rust,
     Go,
@@ -97,4 +98,75 @@ fn main() -> Result<(), Error> {
     println!("Succesfully created flake.nix and .envrc");
 
     return Ok(());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Language;
+    use assert_cmd::Command;
+    use strum::IntoEnumIterator;
+
+    #[test]
+    fn test_correct_langs_and_valid_path() -> Result<(), Box<dyn std::error::Error>> {
+        for lang in Language::iter() {
+            let lang_str = lang.to_string();
+            let temp_dir = tempdir::TempDir::new(
+                ("test_correct_langs_and_valid_path ".to_string() + &lang_str).as_str(),
+            )?;
+            let mut cmd = Command::cargo_bin("flake-gen")?;
+            cmd.args([
+                "--lang",
+                lang_str.as_str(),
+                temp_dir.path().to_str().unwrap(),
+            ]);
+            cmd.assert().success().stdout(predicates::str::contains(
+                "Succesfully created flake.nix and .envrc",
+            ));
+        }
+
+        // Test no language
+        let temp_dir = tempdir::TempDir::new("test_correct_langs_and_valid_path")?;
+        let mut cmd = Command::cargo_bin("flake-gen")?;
+        cmd.args([temp_dir.path().to_str().unwrap()]);
+        cmd.assert().success().stdout(predicates::str::contains(
+            "Succesfully created flake.nix and .envrc",
+        ));
+
+        return Ok(());
+    }
+
+    #[test]
+    fn test_invalid_lang() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempdir::TempDir::new("test_invalid_lang")?;
+        let mut cmd = Command::cargo_bin("flake-gen")?;
+        cmd.args(["--lang", "rus", temp_dir.path().to_str().unwrap()]);
+        cmd.assert().stderr(predicates::str::contains(
+            "invalid value 'rus' for '--lang <LANG>'",
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_invalid_flag() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempdir::TempDir::new("invalid_flag")?;
+        let mut cmd = Command::cargo_bin("flake-gen")?;
+        cmd.args(["--lan", "rust", temp_dir.path().to_str().unwrap()]);
+        cmd.assert().stderr(predicates::str::contains(
+            "unexpected argument '--lan' found",
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_no_path() -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd = Command::cargo_bin("flake-gen")?;
+        cmd.args(["--lang", "rust"]);
+        cmd.assert().stderr(predicates::str::contains(
+            "error: the following required arguments were not provided",
+        ));
+
+        Ok(())
+    }
 }

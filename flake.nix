@@ -60,6 +60,9 @@
               nodePackages.prettier
               taplo
             ];
+            env = {
+              TEMPLATES_DIR = "./templates";
+            };
           };
         packages.default = package;
       }

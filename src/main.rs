@@ -92,9 +92,9 @@ fn main() -> Result<(), Error> {
     std::fs::create_dir_all(cli.path)?;
 
     std::fs::copy(source_flake_path, dest_flake_path)?;
-    dbg!(source_envrc_path.clone());
-    dbg!(dest_envrc_path.clone());
     std::fs::copy(source_envrc_path, dest_envrc_path)?;
+
+    println!("Succesfully created flake.nix and .envrc");
 
     return Ok(());
 }

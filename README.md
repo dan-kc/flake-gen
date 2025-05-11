@@ -15,5 +15,5 @@ Additionally, `flake-gen` incorporates some personal preferences, such as for ru
 ## Supported languages
 
 - rust
-- go (working on it)
+- go
 - python (working on it)

@@ -1,24 +1,38 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
     {
-      self,
       nixpkgs,
-      rust-overlay,
+      fenix,
       flake-utils,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        overlays = [ (import rust-overlay) ];
+        overlays = [ fenix.overlays.default ]; # Adds nightly rust analyser
         pkgs = import nixpkgs {
           inherit system overlays;
+        };
+        toolchain = fenix.packages.${system}.minimal.toolchain;
+        rustPlatform = pkgs.makeRustPlatform {
+          cargo = toolchain;
+          rustc = toolchain;
+        };
+        pname = "package_name";
+        package = rustPlatform.buildRustPackage {
+          inherit pname;
+          version = "0.1.0";
+          src = ./.;
+          cargoLock.lockFile = ./Cargo.lock;
         };
       in
       {
@@ -26,12 +40,21 @@
           with pkgs;
           mkShell {
             buildInputs = [
-              rust-bin.beta.latest.default
+              (fenix.packages.${system}.complete.withComponents [
+                "cargo"
+                "clippy"
+                "rustc"
+                "rustfmt"
+              ])
               rust-analyzer
-              rustfmt
-              taplo # TOML LSP and formatter
+              nil
+              nixfmt-rfc-style
+              taplo
             ];
           };
+        packages = {
+          default = package;
+        };
       }
     );
 }

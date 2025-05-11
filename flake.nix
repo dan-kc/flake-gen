@@ -18,16 +18,15 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        overlays = [ fenix.overlays.default ]; # Adds nightly rust analyser
         pkgs = import nixpkgs {
-          inherit system overlays;
+          inherit system;
         };
         toolchain = fenix.packages.${system}.minimal.toolchain;
         rustPlatform = pkgs.makeRustPlatform {
           cargo = toolchain;
           rustc = toolchain;
         };
-        pname = "dev-tools";
+        pname = "flake-gen";
         package = rustPlatform.buildRustPackage {
           inherit pname;
           version = "0.1.0";
@@ -55,7 +54,6 @@
                 "rustc"
                 "rustfmt"
               ])
-              # rust-analyzer-nightly # Not sure why this doesn't work well
               rust-analyzer
               nil
               nixfmt-rfc-style
@@ -64,9 +62,6 @@
             ];
           };
         defaultPackage = package;
-        # packages = {
-        #   default = package;
-        # };
       }
     );
 }

@@ -59,6 +59,7 @@
               rust-analyzer
               nil
               nixfmt-rfc-style
+              nodePackages.prettier
               taplo
             ];
           };

@@ -62,9 +62,10 @@
               taplo
             ];
           };
-        packages = {
-          default = package;
-        };
+        defaultPackage = package;
+        # packages = {
+        #   default = package;
+        # };
       }
     );
 }

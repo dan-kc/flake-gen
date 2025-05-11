@@ -32,9 +32,8 @@
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             pkgs.go
-            golangci-lint
-            goimports
             gopls
+            gofumpt
           ];
         };
         defaultPackage = myGoProject;

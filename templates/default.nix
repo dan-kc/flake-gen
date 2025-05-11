@@ -6,8 +6,8 @@
 
   outputs =
     {
+      self,
       nixpkgs,
-      fenix,
       flake-utils,
       ...
     }:
@@ -17,25 +17,20 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        # pname = "package_name";
-        # package = rustPlatform.buildRustPackage {
-        #   inherit pname;
-        #   version = "0.1.0";
-        #   src = ./.;
-        #   cargoLock.lockFile = ./Cargo.lock;
-        # };
       in
       {
-        devShells.default =
-          with pkgs;
-          mkShell {
-            buildInputs = [
-              nil
-              nixfmt-rfc-style
-            ];
-          };
-        packages = {
-          default = package;
+        devShells.default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            nil
+            nixfmt-rfc-style
+          ];
+        };
+        defaultPackage = pkgs.stdenv.mkDerivation {
+          pname = "myProject";
+          version = "0.1.0";
+          src = ./.;
+          buildInputs = [ ];
+          nativeBuildInputs = [ ];
         };
       }
     );

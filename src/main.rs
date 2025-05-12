@@ -14,12 +14,14 @@ struct Cli {
 enum Language {
     Rust,
     Go,
+    Typescript
 }
 impl std::fmt::Display for Language {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Language::Rust => write!(f, "rust"),
             Language::Go => write!(f, "go"),
+            Language::Typescript => write!(f, "typescript"),
         }
     }
 }

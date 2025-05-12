@@ -51,7 +51,7 @@ This project is only available via nix flakes.
 
 - rust
 - go
-- python (working on it)
+- typescript
 
 ## Development
 

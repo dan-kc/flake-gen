@@ -7,6 +7,7 @@ edition = "2024"
 camino = "1.1.9"
 clap = { version = "4.5.37", features = ["derive"] }
 strum = { version = "0.27.1", features = ["derive"] }
+tera = "1.20.0"
 
 [dev-dependencies]
 assert_cmd = "2.0.17"

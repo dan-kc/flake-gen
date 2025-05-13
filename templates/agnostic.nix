@@ -1,6 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+#
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -19,12 +20,12 @@
         };
       in
       {
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            nil
-            nixfmt-rfc-style
-          ];
-        };
+        # devShells.default = pkgs.mkShell {
+        #   buildInputs = with pkgs; [
+        #     nil
+        #     nixfmt-rfc-style
+        #   ];
+        # };
         defaultPackage = pkgs.stdenv.mkDerivation {
           pname = "myProject";
           version = "0.1.0";

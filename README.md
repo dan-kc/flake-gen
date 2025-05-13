@@ -55,4 +55,15 @@ This project is only available via nix flakes.
 
 ## Development
 
+### Testing:
+
 Because `cargo test` tests against the built binary, we must run cargo build before cargo test for accurate testing.
+
+### Todo:
+
+- make the default project name to be the curr dir name.
+- `flake-gen rust .` should be the api.
+- `flake-gen rust -picd .` for adding package, image, comments, devshell
+- `flake-gen markdown -picd .` will error because there`s no package option for markdown files.
+- Each lang should have it's own options.
+- Use Terra for templating. Each lang will have it's own Terra template in a sense.

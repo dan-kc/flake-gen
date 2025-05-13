@@ -88,7 +88,7 @@ fn main() -> Result<(), Error> {
     }
 
     // Read the template
-    let template_path = "templates/".to_owned() + &cli.lang.clone().to_string() + ".nix";
+    let template_path = "templates/*.nix";
     let tera = match tera::Tera::new(&template_path) {
         Ok(t) => t,
         Err(e) => {
@@ -136,7 +136,7 @@ fn main() -> Result<(), Error> {
             context.insert("dev_shell", &dev_shell.to_string());
             context.insert("package", &package.to_string());
 
-            let rendered_flake = tera.render("products/product.html", &context).unwrap();
+            let rendered_flake = tera.render("agnostic.nix", &context).unwrap();
 
             RenderedTemplates {
                 flake: rendered_flake,
@@ -189,8 +189,9 @@ impl RenderedTemplates {
             }
         };
 
+        Ok(())
         // Append existing .gitignore
-        todo!()
+        // todo!()
     }
 }
 

@@ -19,23 +19,8 @@
         };
       in
       {
-        {% if dev_shell %}
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            nil
-            nixfmt-rfc-style
-          ];
-        };
-        {% endif %}
-        {% if package %}
-        packages.default = pkgs.stdenv.mkDerivation {
-          pname = "{{ package_name }}";
-          version = "0.1.0";
-          src = ./.;
-          buildInputs = [];
-          nativeBuildInputs = [];
-        };
-        {% endif %}
+        {dev_shell}
+        {{package}}
       }
     );
 }

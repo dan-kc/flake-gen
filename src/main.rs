@@ -29,8 +29,6 @@ enum Language {
         comments: bool,
         #[arg(short = 'p')]
         package: bool,
-        #[arg(short = 'i')]
-        image: bool,
         #[arg(short = 'd')]
         dev: bool,
         #[arg(short = 'g')]
@@ -97,45 +95,20 @@ fn main() -> Result<(), Error> {
         }
     };
 
-    // Render flake
+    // Render templates
     let rendered_templates = match cli.lang {
         #[allow(unused)]
         Language::Agnostic {
             path,
             dev,
             git,
-            image,
             package,
             comments,
         } => {
             let mut context = tera::Context::new();
-
-            let dev_shell = if dev {
-                "
-                         devShells.default = pkgs.mkShell {
-                           buildInputs = with pkgs; [
-                             nil
-                             nixfmt-rfc-style
-                           ];
-                         };
-                    "
-            } else {
-                ""
-            };
-
-            let package_name = std::env::current_dir().unwrap().file_name().unwrap();
-            let package = "
-                        package.default = pkgs.stdenv.mkDerivation {
-                          pname = \"myProject\";
-                          version = \"0.1.0\";  // Escape inner quotes
-                          src = ./.;
-                          buildInputs = [ ];
-                          nativeBuildInputs = [ ];
-                        };
-                    ";
-            context.insert("dev_shell", &dev_shell.to_string());
-            context.insert("package", &package.to_string());
-
+            context.insert("dev", &dev);
+            context.insert("package", &package);
+            context.insert("comments", &comments);
             let rendered_flake = tera.render("agnostic.nix", &context).unwrap();
 
             RenderedTemplates {
@@ -147,23 +120,6 @@ fn main() -> Result<(), Error> {
     };
 
     rendered_templates.write(base_path)
-
-    // OLDDYYY
-    // OLDDYYY
-    // OLDDYYY
-    // OLDDYYY
-    // let (dest_flake_path, dest_envrc_path) = get_dest_file_paths(cli.path.clone());
-    // check_dest_files_already_exist(&dest_flake_path, &dest_envrc_path)?;
-    //
-    // // NOTE: If this returns an error then some of the created folders may still remain.
-    // // TODO: Delete created folders in this case
-    // std::fs::create_dir_all(cli.path)?;
-    //
-    // std::fs::copy(source_flake_path, dest_flake_path)?;
-    // std::fs::copy(source_envrc_path, dest_envrc_path)?;
-    //
-    // println!("Succesfully created flake.nix and .envrc");
-    //
 }
 
 #[allow(unused)]

@@ -1,5 +1,5 @@
 {% if comments -%}
-# List the depenencies for your flake
+# List the dependencies for your flake
 # to update the dependencies run `nix flake upadate`
 {% endif -%}
 {

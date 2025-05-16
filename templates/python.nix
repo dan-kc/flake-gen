@@ -19,22 +19,25 @@
         pkgs = import nixpkgs {
           inherit system;
         };
+        pythonEnv = pkgs.python3.withPackages (ps: with ps; [
+          # Add your Python project's dependencies here
+          # For example: flask requests
+        ]);
         {% if package %}
         pname = "package_name";
         version = "0.1.0";
-        # Build your Go project
-        # Adjust src and other parameters as needed for your project structure
-        package = pkgs.buildGoModule {
-          inherit pname version system;
+        # Build your Python project
+        # This assumes a simple Python package structure
+        package = pkgs.buildPythonPackage {
+          inherit pname version;
           src = ./.;
-          # Optional: vendorGoMod = true; if you're vendoring dependencies
-          # Optional: proxyVendor = true; if you're using a proxy for modules
+          # Optional: Adjust buildPhase, installPhase, etc. for your project
         };
         {% endif -%}
 
         {% if docker_image %}
         {% if comments -%}
-        # Define the Docker image for your Go application
+        # Define the Docker image for your Python application
         {% endif -%}
         dockerImage = pkgs.dockerTools.buildLayeredImage {
           name = pname;
@@ -42,19 +45,17 @@
 
           # Contents of the image
           contents = [
-            package # Include your built Go binary
-            # Add any runtime dependencies your Go binary needs
-            # For example, if your Go app interacts with a database
-            # pkgs.glibc # Often needed for static binaries
+            pythonEnv # Include the Python environment with dependencies
+            ./. # Include your project source code
+            # Add any other necessary files or configurations
           ];
 
           # The entrypoint for your Docker container
-          # Adjust this to match your binary's location within the image
-          entrypoint = [ "/run/current-system/sw/bin/${pname}" ];
-
-          # Optional Docker image configuration
-          # config.Env = [ "MY_APP_ENV=production" ];
-          # config.ExposedPorts = { "8080/tcp" = {}; };
+          # This will depend on how you run your Python application
+          # Example: Running a Python script
+          # entrypoint = [ "${pythonEnv}/bin/python" "./main.py" ];
+          # Example: Running a web server (e.g., Gunicorn)
+          # entrypoint = [ "${pythonEnv}/bin/gunicorn" "-w 4" "app:app" ];
         };
         {% endif %}
 
@@ -66,10 +67,14 @@
         {% endif -%}
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            go # Go compiler and tools
-            gopls # Go Language Server
-            goimports # Go formatter
-            golangci-lint # Go linter (optional but recommended)
+            python3 # Python interpreter
+            # Add Python development tools here (using withPackages or individually)
+            python3Packages.pip # pip package manager (for dev use)
+            python3Packages.virtualenv # virtualenv (optional)
+            pyright # Python Language Server
+            black # Python formatter
+            isort # Python import sorter
+            mypy # Python type checker
             nil # Nix Language Server
             nixfmt-rfc-style # Nix formatter
             # Add any other development tools here

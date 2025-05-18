@@ -66,13 +66,11 @@
         {% endif -%}
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            go # Go compiler and tools
-            gopls # Go Language Server
-            goimports # Go formatter
-            golangci-lint # Go linter (optional but recommended)
-            nil # Nix Language Server
-            nixfmt-rfc-style # Nix formatter
-            # Add any other development tools here
+            go
+            gopls
+            gotools
+            nil
+            nixfmt-rfc-style
           ];
         };
         {% endif -%}

@@ -30,14 +30,15 @@
         {% endif -%}
         package = pkgs.stdenv.mkDerivation {
           inherit pname version src;
+          {% if comments -%}
           # If you have a simple build step (like copying), define it here
           # buildPhase = ''
           #   echo "No specific build process defined"
           # '';
+          {% endif -%}
           installPhase = ''
             mkdir -p $out/
-            cp -r $src/* $out/ # Copy your project files to the installation directory
-            # You might need to be more selective here depending on your project
+            cp -r $src/* $out/
           '';
         };
         {% endif -%}
@@ -50,14 +51,19 @@
           name = pname;
           tag = version;
 
+          {% if comments -%}
           # Contents of the image
           # This includes your 'package' (your project files) and any runtime dependencies
+          {% endif -%}
           contents = [
-            package # Your project files (as defined in the 'package' derivation)
+            package
+            {% if comments -%}
             # Add any necessary runtime dependencies here
             # For example: pkgs.bash pkgs.coreutils
+            {% endif -%}
           ];
 
+          {% if comments -%}
           # The entrypoint for your Docker container
           # This is crucial and needs to be the command that starts your application
           # Example: Running a script copied into the image
@@ -66,7 +72,8 @@
           # entrypoint = [ "/run/current-system/sw/${pname}/path/to/your-binary" ];
           # You need to adjust this path based on how your 'package' derivation
           # installs your files and where your executable/script is located.
-          entrypoint = [ "/path/to/your/entrypoint" ]; # <<<<< **MUST BE CUSTOMIZED**
+          {% endif -%}
+          entrypoint = [ "/path/to/your/entrypoint" ];
         };
         {% endif %}
 
@@ -81,8 +88,10 @@
           buildInputs = with pkgs; [
             nil # Nix Language Server
             nixfmt-rfc-style # Nix formatter
+            {% if comments -%}
             # Add general development tools that aren't language-specific
             # For example: git, curl, jq, yq, editorconfig-checker
+            {% endif -%}
           ];
         };
         {% endif -%}

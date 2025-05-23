@@ -46,7 +46,6 @@ impl From<std::io::Error> for Error {
 
 fn main() -> Result<(), Error> {
     let cli = Cli::parse();
-
     let base_path = match cli.path.clone() {
         None => std::env::current_dir()?,
         Some(path) => path,
@@ -111,7 +110,7 @@ fn main() -> Result<(), Error> {
     permissions.set_mode(0o644);
     std::fs::set_permissions(flake_path, permissions)?;
 
-    // Render envrc
+    // Render and save envrc
     if cli.dev {
         let mut envrc_path = base_path.clone();
         envrc_path.push(".envrc");
@@ -122,7 +121,7 @@ fn main() -> Result<(), Error> {
         std::fs::set_permissions(envrc_path, permissions)?;
     };
 
-    // Render envrc
+    // Render and save envrc
     if cli.git {
         let mut gitignore_path = base_path.clone();
         gitignore_path.push(".envrc");

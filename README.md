@@ -6,7 +6,7 @@
 - **Strictly essential files only:** This project focuses _only_ on generating the `flake.nix` and `.envrc` and `.gitignore` files, avoiding the inclusion of any code within the generated output.
 - **No GitHub Actions**
 
-Additionally, `flake-gen` incorporates some personal preferences. For example the `rust` subcommand uses [fenix](https://github.com/nix-community/fenix) in order to get the latest rust toolchain instead of `nixpkgs` which is often stale.
+Additionally, `flake-gen` incorporates some personal preferences. For example the `rust` subcommand uses [fenix](https://github.com/nix-community/fenix) in order to get the latest Rust toolchain instead of `nixpkgs` which is often stale.
 
 I intend to add add support for more languages as and when I need them.
 

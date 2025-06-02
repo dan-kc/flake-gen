@@ -1,3 +1,4 @@
+{% set is_empty = comments or package or comments or docker_image -%}
 {% if comments -%}
 # List the dependencies for your flake
 # to update the dependencies run `nix flake update`
@@ -19,11 +20,13 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        pname = "my-generic-app"; # Default package name
+        {% if package or docker_image -%}
+        pname = "my-app"; # Default package name
         version = "0.1.0"; # Default version
         src = ./.; # Assume project source is in the flake root
+        {% endif -%}
 
-        {% if package %}
+        {% if package -%}
         {% if comments -%}
         # Define a basic package that just includes your project source
         # This is useful if your "build" is simply copying your files
@@ -84,23 +87,21 @@
         # List the dependencies for your devshell
         # Include general development tools here
         {% endif -%}
+        {% endif -%}
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            nil # Nix Language Server
-            nixfmt-rfc-style # Nix formatter
-            {% if comments -%}
-            # Add general development tools that aren't language-specific
-            # For example: git, curl, jq, yq, editorconfig-checker
+            {% if dev -%}
+            nil
+            nixfmt-rfc-style
             {% endif -%}
           ];
         };
-        {% endif -%}
 
-        {% if package %}
+        {% if package -%}
         packages.default = package;
         {% endif -%}
 
-        {% if docker_image %}
+        {% if docker_image -%}
         packages.dockerImage = dockerImage;
         apps.docker-build-and-load = flake-utils.lib.mkApp {
           drv = pkgs.writeScript "docker-build-and-load" ''
@@ -112,7 +113,7 @@
             echo "Docker image '${pname}:${version}' loaded."
           '';
         };
-        {% endif %}
+        {% endif -%}
       }
     );
 }

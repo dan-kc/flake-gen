@@ -84,7 +84,7 @@ fn main() -> Result<(), Error> {
     }
 
     // Load the templates
-    let template_path = "templates/*.nix";
+    let template_path = "templates/*.template";
     let tera = match tera::Tera::new(&template_path) {
         Ok(t) => t,
         Err(e) => {
@@ -101,7 +101,7 @@ fn main() -> Result<(), Error> {
 
     // Get filename
     let mut flake_template_name = cli.lang.to_string();
-    flake_template_name.push_str(".nix");
+    flake_template_name.push_str(".template");
 
     // Render and save flake
     let rendered_flake = tera.render(flake_template_name.as_str(), &context).unwrap();
@@ -124,7 +124,7 @@ fn main() -> Result<(), Error> {
     // Render and save envrc
     if cli.git {
         let mut gitignore_path = base_path.clone();
-        gitignore_path.push(".envrc");
+        gitignore_path.push(".gitignore");
         let gitignore = ".direnv/";
         std::fs::write(&gitignore_path, gitignore)?;
         let mut permissions = std::fs::metadata(&gitignore_path)?.permissions();

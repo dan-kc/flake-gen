@@ -3,16 +3,28 @@
 `flake-gen` is a Nix flake generator, conceptually similar to the [Official Nix Templates](https://github.com/NixOS/templates). It is designed to address specific requirements and preferences:
 
 - **Dev Shell Centric:** Language servers and formatters are included directly within the generated development shell. This is particularly useful for users of minimal NixOS environments who prefer not to install language-specific dependencies globally.
-- **Strictly Flake and envrc:** This project focuses _only_ on generating the `flake.nix` and `.envrc` files, avoiding the inclusion of language-specific code within the generated output.
+- **Strictly Flake and envrc:** This project focuses _only_ on generating the `flake.nix` and `.envrc` and `.gitignore` files, avoiding the inclusion of any code within the generated output.
 - **No GitHub Actions**
 
-Additionally, `flake-gen` incorporates some personal preferences. For example the `--lang rust` option uses [fenix](https://github.com/nix-community/fenix) for the rust toolchain instead of `nixpkgs`, and `fenix` for building over `naersk`.
+Additionally, `flake-gen` incorporates some personal preferences. For example the `rust` subcommand uses [fenix](https://github.com/nix-community/fenix) for the rust toolchain instead of `nixpkgs`, and `fenix` for building over `naersk`.
 
 I intend to add add support for more languages as and when I need them.
 
+## Currently supported languages
+
+- Agnostic (produces generic language-agnostic files)
+- Rust
+
 ## Usage
 
-`flake-gen --lang {language} {path}` will generate a flake.nix and .envrc for the specified language in the specified path. If you don't specify a `lang` it will output a language agnostic flake.
+`flake-gen {language} {path}` will generate a flake.nix for the specified language in the specified path. The default flake is pretty bare bones, you can add the flags -p (project), -d (devshell), -c (comments), -g (gitignore) to flesh out the template: `flake-gen rust ./test_dir -dpcg`.
+
+### Full list of options:
+
+- `-d` (Adds a devshell to the flake and a `.envrc` file)
+- `-p` (Adds a project to build to the flake)
+- `-c` (Adds helpful comments throughout the flake)
+- `-g` (Adds a `.gitignore` file)
 
 ## Installation
 
@@ -47,23 +59,11 @@ This project is only available via nix flakes.
   ];
 ```
 
-## Supported languages
-
-- rust
-- go
-- typescript
-
 ## Development
-
-### Testing:
-
-Because `cargo test` tests against the built binary, we must run cargo build before cargo test for accurate testing.
 
 ### Todo:
 
-- make the default project name to be the curr dir name.
-- `flake-gen rust .` should be the api.
-- `flake-gen rust -picd .` for adding package, image, comments, devshell
-- `flake-gen markdown -picd .` will error because there`s no package option for markdown files.
-- Each lang should have it's own options.
-- Use Terra for templating. Each lang will have it's own Terra template in a sense.
+- Make the default project name to be the curr dir name.
+- Add Rust
+- Add Go
+- Add Ts

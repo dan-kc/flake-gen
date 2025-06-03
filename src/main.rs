@@ -5,6 +5,15 @@ use strum::EnumIter;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
+    #[command(flatten)]
+    args: GlobalArgs,
+    #[arg(value_enum)]
+    lang: Language,
+    path: Option<PathBuf>,
+}
+
+#[derive(Parser, Debug)]
+struct GlobalArgs {
     #[arg(short = 'c')]
     comments: bool,
     #[arg(short = 'p')]
@@ -13,9 +22,6 @@ struct Cli {
     dev: bool,
     #[arg(short = 'g')]
     git: bool,
-    #[arg(value_enum)]
-    lang: Language,
-    path: Option<PathBuf>,
 }
 
 #[derive(ValueEnum, Clone, Debug, EnumIter)]
@@ -59,7 +65,7 @@ fn main() -> Result<(), Error> {
     }
 
     // Error if dev flag picked and .envrc exists
-    if cli.dev {
+    if cli.args.dev {
         let mut envrc_path = base_path.clone();
         envrc_path.push(".envrc");
         if envrc_path.exists() {
@@ -68,7 +74,7 @@ fn main() -> Result<(), Error> {
     };
 
     // Error if git flag picked and .gitignore exists
-    if cli.git {
+    if cli.args.git {
         let mut gitignore_path = base_path.clone();
         gitignore_path.push(".gitignore");
         if gitignore_path.exists() {
@@ -95,9 +101,9 @@ fn main() -> Result<(), Error> {
 
     // Insert context
     let mut context = tera::Context::new();
-    context.insert("dev", &cli.dev);
-    context.insert("package", &cli.package);
-    context.insert("comments", &cli.comments);
+    context.insert("dev", &cli.args.dev);
+    context.insert("package", &cli.args.package);
+    context.insert("comments", &cli.args.comments);
 
     // Get filename
     let mut flake_template_name = cli.lang.to_string();
@@ -111,7 +117,7 @@ fn main() -> Result<(), Error> {
     std::fs::set_permissions(flake_path, permissions)?;
 
     // Render and save envrc
-    if cli.dev {
+    if cli.args.dev {
         let mut envrc_path = base_path.clone();
         envrc_path.push(".envrc");
         let envrc = "use flake . -Lv";
@@ -122,7 +128,7 @@ fn main() -> Result<(), Error> {
     };
 
     // Render and save envrc
-    if cli.git {
+    if cli.args.git {
         let mut gitignore_path = base_path.clone();
         gitignore_path.push(".gitignore");
         let gitignore = ".direnv/";
@@ -133,4 +139,26 @@ fn main() -> Result<(), Error> {
     };
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    // Essential tests
+    // #[test]
+    // fn test_no_subcommands() {
+    //     let mut cmd = assert_cmd::Command::cargo_bin("flake-gen").unwrap();
+    //     cmd.assert()
+    //         .failure()
+    //         .stderr("error: the following required arguments were not provided:")
+    //         .stdout("hi");
+    // }
+    // fn test_incorrect_flag() {
+    //     todo!()
+    // }
+    // fn test_no_flags() {
+    //     todo!()
+    // }
+    // fn test_all_flags() {
+    //     todo!()
+    // }
 }

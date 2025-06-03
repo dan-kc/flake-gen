@@ -5,23 +5,17 @@ use strum::EnumIter;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    #[command(flatten)]
-    args: GlobalArgs,
+    #[arg(short = 'c', help = "Add comments to flake.nix")]
+    comments: bool,
+    #[arg(short = 'p', help = "Add package to flake.nix")]
+    package: bool,
+    #[arg(short = 'd', help = "Add a dev shell and an .envrc file")]
+    dev: bool,
+    #[arg(short = 'g', help = "Add .gitignore file")]
+    git: bool,
     #[arg(value_enum)]
     lang: Language,
     path: Option<PathBuf>,
-}
-
-#[derive(Parser, Debug)]
-struct GlobalArgs {
-    #[arg(short = 'c')]
-    comments: bool,
-    #[arg(short = 'p')]
-    package: bool,
-    #[arg(short = 'd')]
-    dev: bool,
-    #[arg(short = 'g')]
-    git: bool,
 }
 
 #[derive(ValueEnum, Clone, Debug, EnumIter)]
@@ -65,7 +59,7 @@ fn main() -> Result<(), Error> {
     }
 
     // Error if dev flag picked and .envrc exists
-    if cli.args.dev {
+    if cli.dev {
         let mut envrc_path = base_path.clone();
         envrc_path.push(".envrc");
         if envrc_path.exists() {
@@ -74,7 +68,7 @@ fn main() -> Result<(), Error> {
     };
 
     // Error if git flag picked and .gitignore exists
-    if cli.args.git {
+    if cli.git {
         let mut gitignore_path = base_path.clone();
         gitignore_path.push(".gitignore");
         if gitignore_path.exists() {
@@ -101,9 +95,9 @@ fn main() -> Result<(), Error> {
 
     // Insert context
     let mut context = tera::Context::new();
-    context.insert("dev", &cli.args.dev);
-    context.insert("package", &cli.args.package);
-    context.insert("comments", &cli.args.comments);
+    context.insert("dev", &cli.dev);
+    context.insert("package", &cli.package);
+    context.insert("comments", &cli.comments);
 
     // Get filename
     let mut flake_template_name = cli.lang.to_string();
@@ -117,7 +111,7 @@ fn main() -> Result<(), Error> {
     std::fs::set_permissions(flake_path, permissions)?;
 
     // Render and save envrc
-    if cli.args.dev {
+    if cli.dev {
         let mut envrc_path = base_path.clone();
         envrc_path.push(".envrc");
         let envrc = "use flake . -Lv";
@@ -128,7 +122,7 @@ fn main() -> Result<(), Error> {
     };
 
     // Render and save envrc
-    if cli.args.git {
+    if cli.git {
         let mut gitignore_path = base_path.clone();
         gitignore_path.push(".gitignore");
         let gitignore = ".direnv/";

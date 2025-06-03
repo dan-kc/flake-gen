@@ -22,7 +22,7 @@ I intend to add add support for more languages as and when I need them.
 ### Full list of options:
 
 - `-d` (Adds a devshell to the flake and a `.envrc` file)
-- `-p` (Adds a project to build to the flake)
+- `-p` (Adds a project to the flake. You can build the project with `nix build .`)
 - `-c` (Adds helpful comments throughout the flake)
 - `-g` (Adds a `.gitignore` file)
 

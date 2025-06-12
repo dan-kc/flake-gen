@@ -1,3 +1,4 @@
+{% set is_empty = comments or package or comments or docker_image -%}
 {% if comments -%}
 # List the dependencies for your flake
 # to update the dependencies run `nix flake update`
@@ -19,42 +20,125 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        {% if package %}
-        pname = "package_name";
-        version = "0.1.0";
-        # Build your Go project
-        # Adjust src and other parameters as needed for your project structure
+        {% if package or docker_image -%}
+        pname = "go-app"; # Default package name
+        version = "0.1.0"; # Default version
+        src = ./.; # Assume project source is in the flake root
+        
+        {% if comments -%}
+        # Configure Go-specific build options
+        {% endif -%}
+        # For vendored dependencies
+        vendorGoMod = false; # Set to true if using 'go mod vendor'
+        # For module checksums
+        vendorSha256 = null; # Set this if not using vendorGoMod, or null to compute it
+
+        {% endif -%}
+        
+        {% if package -%}
+        {% if comments -%}
+        # Define your Go application build
+        # This uses buildGoModule which is the standard way to build Go applications in Nix
+        {% endif -%}
         package = pkgs.buildGoModule {
-          inherit pname version system;
-          src = ./.;
-          # Optional: vendorGoMod = true; if you're vendoring dependencies
-          # Optional: proxyVendor = true; if you're using a proxy for modules
+          inherit pname version src;
+          inherit vendorSha256;
+          
+          {% if comments -%}
+          # Vendoring configuration - uncomment as needed
+          # vendorGoMod = true; # Use this if you run 'go mod vendor'
+          # proxyVendor = true; # Use if vendoring through a proxy
+          
+          # Conditionally set vendor hash based on whether vendoring is used
+          # vendorSha256 = if vendorGoMod then null else "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+          
+          # Build flags - useful for setting variables or build tags
+          # buildFlags = [ "-tags=netgo,osusergo" "-trimpath" ];
+          
+          # Cross-compilation - useful for building for a different OS/architecture
+          # GOOS = "linux";
+          # GOARCH = "amd64";
+          # CGO_ENABLED = "0"; # Set to "0" to build a static binary
+          {% endif -%}
+          
+          {% if comments -%}
+          # Optional: Pre-build or post-build steps
+          # preBuild = ''
+          #   # Commands to run before the build
+          # '';
+          
+          # postBuild = ''
+          #   # Commands to run after the build
+          # '';
+          {% endif -%}
         };
         {% endif -%}
 
         {% if docker_image %}
         {% if comments -%}
         # Define the Docker image for your Go application
+        # Go applications are often compiled into a single binary which makes them
+        # ideal for containerization with minimal dependencies
         {% endif -%}
         dockerImage = pkgs.dockerTools.buildLayeredImage {
           name = pname;
           tag = version;
 
+          {% if comments -%}
           # Contents of the image
+          # For Go, we typically only need the compiled binary and minimal runtime
+          # dependencies, making for very small images
+          {% endif -%}
           contents = [
             package # Include your built Go binary
+            {% if comments -%}
             # Add any runtime dependencies your Go binary needs
-            # For example, if your Go app interacts with a database
-            # pkgs.glibc # Often needed for static binaries
+            # Most Go binaries are statically linked and don't need much
+            # pkgs.ca-certificates # If your app makes HTTPS requests
+            # pkgs.tzdata # If your app needs timezone data
+            {% endif -%}
           ];
 
+          {% if comments -%}
           # The entrypoint for your Docker container
-          # Adjust this to match your binary's location within the image
-          entrypoint = [ "/run/current-system/sw/bin/${pname}" ];
+          # This will typically point to your Go binary
+          {% endif -%}
+          entrypoint = [ "${package}/bin/${pname}" ];
 
-          # Optional Docker image configuration
-          # config.Env = [ "MY_APP_ENV=production" ];
-          # config.ExposedPorts = { "8080/tcp" = {}; };
+          {% if comments -%}
+          # Configuration for the container
+          # Examples of common settings for Go applications:
+          {% endif -%}
+          config = {
+            {% if comments -%}
+            # Environment variables
+            {% endif -%}
+            Env = [ 
+              {% if comments -%}
+              # "GO_ENV=production" 
+              # "PORT=8080"
+              {% endif -%}
+            ];
+            
+            {% if comments -%}
+            # Exposed ports - common for web services
+            {% endif -%}
+            ExposedPorts = { 
+              {% if comments -%}
+              # "8080/tcp" = {};
+              {% endif -%}
+            };
+            
+            {% if comments -%}
+            # Working directory inside the container
+            {% endif -%}
+            WorkingDir = "/";
+            
+            {% if comments -%}
+            # User to run as (for security, avoid running as root)
+            # User = "nobody";
+            {% endif -%}
+          };
         };
         {% endif %}
 
@@ -63,23 +147,52 @@
         {% if dev -%}
         {% if comments -%}
         # List the dependencies for your devshell
+        # Includes Go development tools, language server, and linters
         {% endif -%}
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            go
-            gopls
-            gotools
-            nil
-            nixfmt-rfc-style
+            # Go toolchain and standard tools
+            go # Go compiler and standard library
+            gopls # Go language server for IDE integration
+            gotools # Standard Go tools (goimports, etc.)
+            
+            # Go development tools
+            golangci-lint # Comprehensive Go linter
+            delve # Go debugger
+            go-outline # Go symbol extraction utility
+            gotests # Go test generation
+            gomodifytags # Go tool for modifying struct tags
+            impl # Go tool for generating interface method stubs
+            
+            # Nix development tools
+            nil # Nix Language Server
+            nixfmt-rfc-style # Nix formatter
+            
+            {% if comments -%}
+            # Optional tools based on your workflow
+            # mockgen # For generating mocks
+            # protobuf # For protocol buffers
+            # protoc-gen-go # Go protocol buffers compiler
+            # goreleaser # For releasing Go projects
+            {% endif -%}
           ];
+          
+          {% if comments -%}
+          # Optional shell hook to set up the environment
+          # shellHook = ''
+          #   export GOPATH="$PWD/.go"
+          #   export PATH="$GOPATH/bin:$PATH"
+          #   export GO111MODULE=on
+          # '';
+          {% endif -%}
         };
         {% endif -%}
 
-        {% if package %}
+        {% if package -%}
         packages.default = package;
         {% endif -%}
 
-        {% if docker_image %}
+        {% if docker_image -%}
         packages.dockerImage = dockerImage;
         apps.docker-build-and-load = flake-utils.lib.mkApp {
           drv = pkgs.writeScript "docker-build-and-load" ''
@@ -91,7 +204,7 @@
             echo "Docker image '${pname}:${version}' loaded."
           '';
         };
-        {% endif %}
+        {% endif -%}
       }
     );
 }

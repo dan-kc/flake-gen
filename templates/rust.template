@@ -1,6 +1,6 @@
 {% if comments -%}
 # List the dependencies for your flake
-# to update the dependencies run `nix flake upadate`
+# to update the dependencies run `nix flake update`
 {% endif -%}
 {
   inputs = {
@@ -54,7 +54,7 @@
         };
         {% endif -%}
 
-        {% if image %}
+        {% if docker_image %}
         {% if comments -%}
         # Define the Docker image
         # This creates a layered Docker image based on your built package
@@ -95,10 +95,10 @@
       {
         {% if dev -%}
         {% if comments -%}
-        # List the depenencies for your devshell
+        # List the dependencies for your devshell
         # To enter the shell run `nix develop`
         # Or install direnv globally, then run `direnv allow`
-        # this will install dev-depenencies whenever you enter this directory
+        # this will install dev-dependencies whenever you enter this directory
         {% endif -%}
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
@@ -133,7 +133,7 @@
         packages.default = package;
         {% endif -%}
 
-        {% if image %}
+        {% if docker_image %}
         {% if comments -%}
         # The derivation for your Docker image
         # To build this run `nix build .#dockerImage`

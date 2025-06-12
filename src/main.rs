@@ -135,24 +135,47 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-#[cfg(test)]
-mod test {
-    // Essential tests
-    // #[test]
-    // fn test_no_subcommands() {
-    //     let mut cmd = assert_cmd::Command::cargo_bin("flake-gen").unwrap();
-    //     cmd.assert()
-    //         .failure()
-    //         .stderr("error: the following required arguments were not provided:")
-    //         .stdout("hi");
-    // }
-    // fn test_incorrect_flag() {
-    //     todo!()
-    // }
-    // fn test_no_flags() {
-    //     todo!()
-    // }
-    // fn test_all_flags() {
-    //     todo!()
-    // }
-}
+// #[cfg(test)]
+// mod test {
+//     use strum::IntoEnumIterator;
+//
+//     use crate::Language;
+//     fn test_no_args() {
+//         let mut cmd = assert_cmd::Command::cargo_bin("flake-gen").unwrap();
+//         cmd.assert()
+//             .failure()
+//             .stderr("error: the following required arguments were not provided:")
+//             .stdout("hi");
+//     }
+//     fn test_incorrect_arg() {
+//         let mut cmd = assert_cmd::Command::cargo_bin("flake-gen").unwrap();
+//         cmd.assert()
+//             .failure()
+//             .stderr("error: the following required arguments were not provided:")
+//             .stdout("hi");
+//     }
+//     fn test_incorrect_flag() {
+//         let mut cmd = assert_cmd::Command::cargo_bin("flake-gen").unwrap();
+//         cmd.assert()
+//             .failure()
+//             .stderr("error: the following required arguments were not provided:")
+//             .stdout("hi");
+//     }
+//     fn test_all_flags() {
+//         for lang in Language::iter() {
+//             let mut all_flags_cmd = assert_cmd::Command::cargo_bin("flake-gen").unwrap();
+//             // create temp dir
+//             // get test files
+//             // run cmd
+//             // get created nix
+//
+//             // load both into a byte_arr then compare the two
+//
+//
+//             let mut no_flags_cmd = assert_cmd::Command::cargo_bin("flake-gen").unwrap();
+//         }
+//     }
+//     fn test_no_flags() {
+//         let mut cmd = assert_cmd::Command::cargo_bin("flake-gen").unwrap();
+//     }
+// }

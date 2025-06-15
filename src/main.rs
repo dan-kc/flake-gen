@@ -1,5 +1,5 @@
 use clap::{Parser, ValueEnum};
-use std::{os::unix::fs::PermissionsExt, path::PathBuf};
+use std::{os::unix::fs::PermissionsExt, path::PathBuf, process::Command};
 use strum::EnumIter;
 
 #[derive(Parser, Debug)]
@@ -52,6 +52,8 @@ enum Error {
     NixFileAlreadyExists,
     EnvrcFileAlreadyExists,
     GitIgnoreAlreadyExists,
+    NixFmtFailed,
+    NixFmtNotFound,
 }
 impl From<std::io::Error> for Error {
     fn from(io_err: std::io::Error) -> Error {
@@ -99,7 +101,8 @@ fn main() -> Result<(), Error> {
     }
 
     // Load the templates
-    let template_path = "templates/*.template";
+    let templates_dir = std::env::var("TEMPLATES_DIR").unwrap_or_else(|_| "templates".to_string());
+    let template_path = format!("{}/*.template", templates_dir);
     let tera = match tera::Tera::new(&template_path) {
         Ok(t) => t,
         Err(e) => {
@@ -124,7 +127,10 @@ fn main() -> Result<(), Error> {
     std::fs::write(&flake_path, rendered_flake)?;
     let mut permissions = std::fs::metadata(&flake_path)?.permissions();
     permissions.set_mode(0o644);
-    std::fs::set_permissions(flake_path, permissions)?;
+    std::fs::set_permissions(&flake_path, permissions)?;
+    
+    // Format the flake.nix with nixfmt-rfc-style
+    format_flake(&flake_path)?;
 
     // Render and save envrc
     if cli.dev {
@@ -149,6 +155,33 @@ fn main() -> Result<(), Error> {
     };
 
     Ok(())
+}
+
+fn format_flake(flake_path: &PathBuf) -> Result<(), Error> {
+    // Check if nixfmt-rfc-style is available
+    let nixfmt_check = Command::new("which")
+        .arg("nixfmt")
+        .output();
+    
+    // Verify nixfmt-rfc-style is available
+    if let Ok(output) = nixfmt_check {
+        if output.status.success() {
+            let format_result = Command::new("nixfmt")
+                .arg(flake_path)
+                .status();
+                
+            match format_result {
+                Ok(status) if status.success() => Ok(()),
+                _ => Err(Error::NixFmtFailed),
+            }
+        } else {
+            // nixfmt-rfc-style not found, return an error
+            Err(Error::NixFmtNotFound)
+        }
+    } else {
+        // Error running which command, return an error
+        Err(Error::NixFmtNotFound)
+    }
 }
 
 #[cfg(test)]

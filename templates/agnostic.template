@@ -77,8 +77,8 @@
 {% endif -%}
           entrypoint = [ "/path/to/your/entrypoint" ];
         };
-{% endif %}
-{% endif -%}
+{%- endif -%}
+{%- endif -%}
       in
       {
 {% if dev -%}

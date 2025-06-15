@@ -34,10 +34,7 @@
           cargoLock.lockFile = ./Cargo.lock;
           nativeBuildInputs = [ pkgs.makeWrapper ];
           buildInputs = [
-            # You might need a simple package here to provide the env var
-            # Or you can construct a derivation that just sets the env var
-            # A common way is to create a dummy package that just sets the env var
-            # Let's create one inline for simplicity here.
+            pkgs.nixfmt-rfc-style
             (pkgs.writeText "set-templates-dir" ''
               export TEMPLATES_DIR=${./templates}
             '')
@@ -48,7 +45,8 @@
           '';
           postFixup = ''
             wrapProgram $out/bin/${pname} \
-              --set TEMPLATES_DIR "$out/share/${pname}/templates"
+              --set TEMPLATES_DIR "$out/share/${pname}/templates" \
+              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nixfmt-rfc-style ]}
           '';
         };
       in

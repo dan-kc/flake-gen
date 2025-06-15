@@ -1,3 +1,7 @@
+{% set empty = true -%}
+{% if dev or package or docker_image -%}
+  {% set empty = false -%}
+{% endif -%}
 {% if comments -%}
 # List the dependencies for your flake
 # to update the dependencies run `nix flake update`
@@ -6,16 +10,20 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    {% if not empty -%}
     fenix = {
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    {% endif -%}
   };
   outputs =
     {
       nixpkgs,
       flake-utils,
+      {% if not empty -%}
       fenix,
+      {% endif -%}
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -24,9 +32,11 @@
         {% if comments -%}
         # This overlay adds the Fenix Rust toolchains to nixpkgs
         {% endif -%}
+        {% if not empty -%}
         overlays = [ fenix.overlays.default ];
+        {% endif -%}
         pkgs = import nixpkgs {
-          inherit system overlays;
+          inherit system {% if not empty -%}overlays{%- endif%};
         };
         {% if package %}
         {% if comments -%}
@@ -89,7 +99,7 @@
           # Optional: Specify the user to run the entrypoint as
           # config.User = "root"; # or a specific user if created in contents
         };
-        {% endif %}
+        {% endif -%}
 
       in
       {
@@ -124,7 +134,7 @@
         };
         {% endif -%}
 
-        {% if package %}
+        {% if package -%}
         {% if comments -%}
         # The derivation for your Rust package
         # To build this run `nix build .` or `nix build .#package_name`
@@ -133,7 +143,7 @@
         packages.default = package;
         {% endif -%}
 
-        {% if docker_image %}
+        {% if docker_image -%}
         {% if comments -%}
         # The derivation for your Docker image
         # To build this run `nix build .#dockerImage`
@@ -156,7 +166,7 @@
             echo "Docker image '${pname}:${version}' loaded."
           '';
         };
-        {% endif %}
+        {% endif -%}
       }
     );
 }

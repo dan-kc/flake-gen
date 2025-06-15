@@ -27,6 +27,7 @@ enum Language {
     Typescript,
     Cpp,
     Terraform,
+    Elixir,
 }
 
 impl std::fmt::Display for Language {
@@ -39,6 +40,7 @@ impl std::fmt::Display for Language {
             Language::Typescript => write!(f, "typescript"),
             Language::Cpp => write!(f, "cpp"),
             Language::Terraform => write!(f, "terraform"),
+            Language::Elixir => write!(f, "elixir"),
         }
     }
 }

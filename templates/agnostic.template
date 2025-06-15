@@ -20,53 +20,52 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        {% if package or docker_image -%}
+{% if package or docker_image -%}
         pname = "my-app"; # Default package name
         version = "0.1.0"; # Default version
         src = ./.; # Assume project source is in the flake root
-        {% endif -%}
 
-        {% if package -%}
-        {% if comments -%}
+{% if package -%}
+{% if comments -%}
         # Define a basic package that just includes your project source
         # This is useful if your "build" is simply copying your files
-        {% endif -%}
+{% endif -%}
         package = pkgs.stdenv.mkDerivation {
           inherit pname version src;
-          {% if comments -%}
+{% if comments -%}
           # If you have a simple build step (like copying), define it here
           # buildPhase = ''
           #   echo "No specific build process defined"
           # '';
-          {% endif -%}
+{% endif -%}
           installPhase = ''
             mkdir -p $out/
             cp -r $src/* $out/
           '';
         };
-        {% endif -%}
+{% endif -%}
 
-        {% if docker_image %}
-        {% if comments -%}
+{% if docker_image %}
+{% if comments -%}
         # Define the Docker image for your application
-        {% endif -%}
+{% endif -%}
         dockerImage = pkgs.dockerTools.buildLayeredImage {
           name = pname;
           tag = version;
 
-          {% if comments -%}
+{% if comments -%}
           # Contents of the image
           # This includes your 'package' (your project files) and any runtime dependencies
-          {% endif -%}
+{% endif -%}
           contents = [
             package
-            {% if comments -%}
+{% if comments -%}
             # Add any necessary runtime dependencies here
             # For example: pkgs.bash pkgs.coreutils
-            {% endif -%}
+{% endif -%}
           ];
 
-          {% if comments -%}
+{% if comments -%}
           # The entrypoint for your Docker container
           # This is crucial and needs to be the command that starts your application
           # Example: Running a script copied into the image
@@ -75,33 +74,31 @@
           # entrypoint = [ "/run/current-system/sw/${pname}/path/to/your-binary" ];
           # You need to adjust this path based on how your 'package' derivation
           # installs your files and where your executable/script is located.
-          {% endif -%}
+{% endif -%}
           entrypoint = [ "/path/to/your/entrypoint" ];
         };
-        {% endif %}
-
+{% endif %}
+{% endif -%}
       in
       {
-        {% if dev -%}
-        {% if comments -%}
+{% if dev -%}
+{% if comments -%}
         # List the dependencies for your devshell
         # Include general development tools here
-        {% endif -%}
-        {% endif -%}
+{% endif -%}
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            {% if dev -%}
             nil
             nixfmt-rfc-style
-            {% endif -%}
           ];
         };
+{% endif -%}
 
-        {% if package -%}
+{% if package -%}
         packages.default = package;
-        {% endif -%}
+{% endif -%}
 
-        {% if docker_image -%}
+{% if docker_image -%}
         packages.dockerImage = dockerImage;
         apps.docker-build-and-load = flake-utils.lib.mkApp {
           drv = pkgs.writeScript "docker-build-and-load" ''
@@ -113,7 +110,7 @@
             echo "Docker image '${pname}:${version}' loaded."
           '';
         };
-        {% endif -%}
+{% endif -%}
       }
     );
 }

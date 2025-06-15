@@ -113,6 +113,7 @@ fn main() -> Result<(), Error> {
     context.insert("dev", &cli.dev);
     context.insert("package", &cli.package);
     context.insert("comments", &cli.comments);
+    context.insert("docker_image", &cli.package); // Docker image is enabled when package is
 
     // Get filename
     let mut flake_template_name = cli.lang.to_string();
@@ -364,7 +365,6 @@ mod tests {
 
     #[test]
     fn test_invalid_arguments() {
-        // Test missing required argument (language)
         let mut cmd = Command::cargo_bin("flake-gen").unwrap();
         cmd.assert().failure().stderr(predicates::str::contains(
             "required arguments were not provided",
@@ -376,7 +376,7 @@ mod tests {
             .assert()
             .failure()
             .stderr(predicates::str::contains(
-                "'invalid-language' isn't a valid value",
+                "invalid value 'invalid-language' for '<LANG>'",
             ));
 
         // Test invalid flag

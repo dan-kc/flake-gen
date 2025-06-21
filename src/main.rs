@@ -197,6 +197,38 @@ mod tests {
 
     use crate::Language;
 
+    fn print_diff(actual: &str, expected: &str, file_type: &str, lang: &str) {
+        if actual != expected {
+            eprintln!("\n--- expected/{}/{}", lang, file_type);
+            eprintln!("+++ actual/{}/{}", lang, file_type);
+            
+            let expected_lines: Vec<&str> = expected.lines().collect();
+            let actual_lines: Vec<&str> = actual.lines().collect();
+            
+            let mut i = 0;
+            let mut j = 0;
+            
+            while i < expected_lines.len() || j < actual_lines.len() {
+                if i < expected_lines.len() && j < actual_lines.len() && expected_lines[i] == actual_lines[j] {
+                    // Lines match, print context
+                    eprintln!(" {}", expected_lines[i]);
+                    i += 1;
+                    j += 1;
+                } else {
+                    // Lines differ, show the diff
+                    while i < expected_lines.len() && (j >= actual_lines.len() || expected_lines[i] != actual_lines[j]) {
+                        eprintln!("-{}", expected_lines[i]);
+                        i += 1;
+                    }
+                    while j < actual_lines.len() && (i >= expected_lines.len() || actual_lines[j] != expected_lines[i]) {
+                        eprintln!("+{}", actual_lines[j]);
+                        j += 1;
+                    }
+                }
+            }
+        }
+    }
+
     // Read all test files into memory once to avoid "too many files open" errors
     fn read_test_files() -> HashMap<String, HashMap<String, String>> {
         let mut test_files = HashMap::new();
@@ -318,6 +350,9 @@ mod tests {
             let lang_files = test_files.get(&lang_str).unwrap();
 
             if let Some(expected_flake) = lang_files.get("all_flags_flake") {
+                if flake_content != *expected_flake {
+                    print_diff(&flake_content, expected_flake, "flake.nix", &lang_str);
+                }
                 assert_eq!(
                     flake_content, *expected_flake,
                     "Generated flake.nix with all flags for {} doesn't match expected",
@@ -326,6 +361,9 @@ mod tests {
             }
 
             if let Some(expected_envrc) = lang_files.get("all_flags_envrc") {
+                if envrc_content != *expected_envrc {
+                    print_diff(&envrc_content, expected_envrc, ".envrc", &lang_str);
+                }
                 assert_eq!(
                     envrc_content, *expected_envrc,
                     "Generated .envrc with all flags for {} doesn't match expected",
@@ -334,6 +372,9 @@ mod tests {
             }
 
             if let Some(expected_gitignore) = lang_files.get("all_flags_gitignore") {
+                if gitignore_content != *expected_gitignore {
+                    print_diff(&gitignore_content, expected_gitignore, ".gitignore", &lang_str);
+                }
                 assert_eq!(
                     gitignore_content, *expected_gitignore,
                     "Generated .gitignore with all flags for {} doesn't match expected",
@@ -372,6 +413,9 @@ mod tests {
             let lang_files = test_files.get(&lang_str).unwrap();
 
             if let Some(expected_flake) = lang_files.get("no_flags_flake") {
+                if flake_content != *expected_flake {
+                    print_diff(&flake_content, expected_flake, "flake.nix", &lang_str);
+                }
                 assert_eq!(
                     flake_content, *expected_flake,
                     "Generated flake.nix with no flags for {} doesn't match expected",

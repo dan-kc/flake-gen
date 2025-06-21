@@ -58,7 +58,6 @@
           # installs your files and where your executable/script is located.
           entrypoint = [ "/path/to/your/entrypoint" ];
         };
-
       in
       {
         # List the dependencies for your devshell
@@ -69,9 +68,7 @@
             nixfmt-rfc-style
           ];
         };
-
         packages.default = package;
-
         packages.dockerImage = dockerImage;
         apps.docker-build-and-load = flake-utils.lib.mkApp {
           drv = pkgs.writeScript "docker-build-and-load" ''

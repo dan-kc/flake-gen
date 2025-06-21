@@ -139,8 +139,7 @@
             # User = "nobody";
             {% endif -%}
           };
-        };
-        {% endif %}
+        };{% endif -%}
 
       in
       {

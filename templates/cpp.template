@@ -20,7 +20,6 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        
         {% if package or docker_image -%}
         pname = "cpp-app"; # Default package name
         version = "0.1.0"; # Default version
@@ -86,7 +85,7 @@
         ];
         {% endif -%}
 
-        {% if package %}
+        {% if package -%}
         {% if comments -%}
         # Build your C++ project using the selected build system
         {% endif -%}
@@ -221,7 +220,7 @@
         };
         {% endif -%}
 
-        {% if docker_image %}
+        {% if docker_image -%}
         {% if comments -%}
         # Define the Docker image for your C++ application
         # This creates a container with minimal dependencies for running your C++ app
@@ -287,7 +286,7 @@
             {% endif -%}
           };
         };
-        {% endif %}
+        {% endif -%}
 
       in
       {

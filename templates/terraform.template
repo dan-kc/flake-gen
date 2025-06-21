@@ -52,7 +52,6 @@
           # ];
           {% endif -%}
         };
-        
         {% if package or docker_image -%}
         {% if comments -%}
         # Configuration for Terraform/OpenTofu project
@@ -221,7 +220,7 @@
             {% endif -%}
           };
         };
-        {% endif %}
+        {% endif -%}
 
       in
       {

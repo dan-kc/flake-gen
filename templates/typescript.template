@@ -20,18 +20,15 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        
         {% if package or docker_image -%}
         pname = "typescript-app"; # Default package name
         version = "0.1.0"; # Default version
         src = ./.; # Assume project source is in the flake root
-        
         {% if comments -%}
         # Define Node.js version and package manager preference
         {% endif -%}
         nodejs = pkgs.nodejs_20; # LTS version
         packageManager = "npm"; # Options: "npm", "yarn", "pnpm"
-        
         {% if comments -%}
         # Package manager commands based on selection
         {% endif -%}
@@ -58,14 +55,13 @@
             start = "pnpm start";
           };
         };
-        
         {% if comments -%}
         # Get the commands for the selected package manager
         {% endif -%}
         pm = pmCommands.${packageManager};
         {% endif -%}
         
-        {% if package %}
+        {% if package -%}
         {% if comments -%}
         # Define your TypeScript application package
         # This creates a Nix package from your TypeScript project
@@ -140,7 +136,7 @@
         };
         {% endif -%}
 
-        {% if docker_image %}
+        {% if docker_image -%}
         {% if comments -%}
         # Define the Docker image for your TypeScript application
         # This creates a container optimized for running Node.js applications
@@ -217,7 +213,7 @@
             {% endif -%}
           };
         };
-        {% endif %}
+        {% endif -%}
 
       in
       {

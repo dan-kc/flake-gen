@@ -184,271 +184,271 @@ fn format_flake(flake_path: &PathBuf) -> Result<(), Error> {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use std::collections::HashMap;
-//     use std::fs::File;
-//     use std::io::Read;
-//     use std::path::PathBuf;
-//
-//     use assert_cmd::Command;
-//     use strum::IntoEnumIterator;
-//     use tempdir::TempDir;
-//
-//     use crate::Language;
-//
-//     // Read all test files into memory once to avoid "too many files open" errors
-//     fn read_test_files() -> HashMap<String, HashMap<String, String>> {
-//         let mut test_files = HashMap::new();
-//
-//         for lang in Language::iter() {
-//             let lang_str = lang.to_string();
-//             let lang_path = format!("tests/{}", lang_str);
-//
-//             // Skip if the test directory doesn't exist for this language
-//             if !std::path::Path::new(&lang_path).exists() {
-//                 continue;
-//             }
-//
-//             let mut lang_files = HashMap::new();
-//
-//             // Read all_flags files
-//             let all_flags_path = format!("{}/all_flags", lang_path);
-//             if std::path::Path::new(&all_flags_path).exists() {
-//                 // Read flake.nix
-//                 let flake_path = format!("{}/flake.nix", all_flags_path);
-//                 if std::path::Path::new(&flake_path).exists() {
-//                     let mut flake_content = String::new();
-//                     File::open(&flake_path)
-//                         .unwrap()
-//                         .read_to_string(&mut flake_content)
-//                         .unwrap();
-//                     lang_files.insert("all_flags_flake".to_string(), flake_content);
-//                 }
-//
-//                 // Read .envrc
-//                 let envrc_path = format!("{}/envrc", all_flags_path);
-//                 if std::path::Path::new(&envrc_path).exists() {
-//                     let mut envrc_content = String::new();
-//                     File::open(&envrc_path)
-//                         .unwrap()
-//                         .read_to_string(&mut envrc_content)
-//                         .unwrap();
-//                     lang_files.insert("all_flags_envrc".to_string(), envrc_content);
-//                 }
-//
-//                 // Read .gitignore
-//                 let gitignore_path = format!("{}/gitignore", all_flags_path);
-//                 if std::path::Path::new(&gitignore_path).exists() {
-//                     let mut gitignore_content = String::new();
-//                     File::open(&gitignore_path)
-//                         .unwrap()
-//                         .read_to_string(&mut gitignore_content)
-//                         .unwrap();
-//                     lang_files.insert("all_flags_gitignore".to_string(), gitignore_content);
-//                 }
-//             }
-//
-//             // Read no_flags files
-//             let no_flags_path = format!("{}/no_flags", lang_path);
-//             if std::path::Path::new(&no_flags_path).exists() {
-//                 // Read flake.nix
-//                 let flake_path = format!("{}/flake.nix", no_flags_path);
-//                 if std::path::Path::new(&flake_path).exists() {
-//                     let mut flake_content = String::new();
-//                     File::open(&flake_path)
-//                         .unwrap()
-//                         .read_to_string(&mut flake_content)
-//                         .unwrap();
-//                     lang_files.insert("no_flags_flake".to_string(), flake_content);
-//                 }
-//             }
-//
-//             test_files.insert(lang_str, lang_files);
-//         }
-//
-//         test_files
-//     }
-//
-//     fn read_generated_file(path: PathBuf) -> String {
-//         let mut content = String::new();
-//         if path.exists() {
-//             File::open(path)
-//                 .unwrap()
-//                 .read_to_string(&mut content)
-//                 .unwrap();
-//         }
-//         content
-//     }
-//
-//     #[test]
-//     fn test_all_languages_all_flags() {
-//         // Read all test files into memory first
-//         let test_files = read_test_files();
-//
-//         for lang in Language::iter() {
-//             let lang_str = lang.to_string();
-//
-//             // Skip if we don't have test files for this language
-//             if !test_files.contains_key(&lang_str) {
-//                 println!("Skipping tests for {}, no test files found", lang_str);
-//                 continue;
-//             }
-//
-//             let temp_dir = TempDir::new("flake-gen-test").unwrap();
-//             let temp_path = temp_dir.path().to_str().unwrap();
-//
-//             // Run command with all flags
-//             let mut cmd = Command::cargo_bin("flake-gen").unwrap();
-//             cmd.args(["-c", "-p", "-d", "-g", &lang_str, temp_path])
-//                 .assert()
-//                 .success();
-//
-//             // Read generated files
-//             let flake_path = temp_dir.path().join("flake.nix");
-//             let flake_content = read_generated_file(flake_path);
-//
-//             let envrc_path = temp_dir.path().join(".envrc");
-//             let envrc_content = read_generated_file(envrc_path);
-//
-//             let gitignore_path = temp_dir.path().join(".gitignore");
-//             let gitignore_content = read_generated_file(gitignore_path);
-//
-//             // Compare with expected content
-//             let lang_files = test_files.get(&lang_str).unwrap();
-//
-//             if let Some(expected_flake) = lang_files.get("all_flags_flake") {
-//                 assert_eq!(
-//                     flake_content, *expected_flake,
-//                     "Generated flake.nix with all flags for {} doesn't match expected",
-//                     lang_str
-//                 );
-//             }
-//
-//             if let Some(expected_envrc) = lang_files.get("all_flags_envrc") {
-//                 assert_eq!(
-//                     envrc_content, *expected_envrc,
-//                     "Generated .envrc with all flags for {} doesn't match expected",
-//                     lang_str
-//                 );
-//             }
-//
-//             if let Some(expected_gitignore) = lang_files.get("all_flags_gitignore") {
-//                 assert_eq!(
-//                     gitignore_content, *expected_gitignore,
-//                     "Generated .gitignore with all flags for {} doesn't match expected",
-//                     lang_str
-//                 );
-//             }
-//         }
-//     }
-//
-//     #[test]
-//     fn test_all_languages_no_flags() {
-//         // Read all test files into memory first
-//         let test_files = read_test_files();
-//
-//         for lang in Language::iter() {
-//             let lang_str = lang.to_string();
-//
-//             // Skip if we don't have test files for this language
-//             if !test_files.contains_key(&lang_str) {
-//                 println!("Skipping tests for {}, no test files found", lang_str);
-//                 continue;
-//             }
-//
-//             let temp_dir = TempDir::new("flake-gen-test").unwrap();
-//             let temp_path = temp_dir.path().to_str().unwrap();
-//
-//             // Run command with no flags
-//             let mut cmd = Command::cargo_bin("flake-gen").unwrap();
-//             cmd.args([&lang_str, temp_path]).assert().success();
-//
-//             // Read generated flake.nix
-//             let flake_path = temp_dir.path().join("flake.nix");
-//             let flake_content = read_generated_file(flake_path);
-//
-//             // Compare with expected content
-//             let lang_files = test_files.get(&lang_str).unwrap();
-//
-//             if let Some(expected_flake) = lang_files.get("no_flags_flake") {
-//                 assert_eq!(
-//                     flake_content, *expected_flake,
-//                     "Generated flake.nix with no flags for {} doesn't match expected",
-//                     lang_str
-//                 );
-//             }
-//
-//             // Verify that .envrc and .gitignore were not created
-//             let envrc_path = temp_dir.path().join(".envrc");
-//             assert!(
-//                 !envrc_path.exists(),
-//                 ".envrc should not exist for {} with no flags",
-//                 lang_str
-//             );
-//
-//             let gitignore_path = temp_dir.path().join(".gitignore");
-//             assert!(
-//                 !gitignore_path.exists(),
-//                 ".gitignore should not exist for {} with no flags",
-//                 lang_str
-//             );
-//         }
-//     }
-//
-//     #[test]
-//     fn test_invalid_arguments() {
-//         let mut cmd = Command::cargo_bin("flake-gen").unwrap();
-//         cmd.assert().failure().stderr(predicates::str::contains(
-//             "required arguments were not provided",
-//         ));
-//
-//         // Test invalid language
-//         let mut cmd = Command::cargo_bin("flake-gen").unwrap();
-//         cmd.arg("invalid-language")
-//             .assert()
-//             .failure()
-//             .stderr(predicates::str::contains(
-//                 "invalid value 'invalid-language' for '<LANG>'",
-//             ));
-//
-//         // Test invalid flag
-//         let mut cmd = Command::cargo_bin("flake-gen").unwrap();
-//         cmd.args(["-z", "agnostic"])
-//             .assert()
-//             .failure()
-//             .stderr(predicates::str::contains("unexpected argument"));
-//     }
-//
-//     #[test]
-//     fn test_file_exists_errors() {
-//         // Setup a temp directory
-//         let temp_dir = TempDir::new("flake-gen-test").unwrap();
-//         let temp_path = temp_dir.path().to_str().unwrap();
-//
-//         // Create flake.nix
-//         std::fs::write(temp_dir.path().join("flake.nix"), "").unwrap();
-//
-//         // Test flake.nix already exists error
-//         let mut cmd = Command::cargo_bin("flake-gen").unwrap();
-//         cmd.args(["agnostic", temp_path]).assert().failure();
-//
-//         // Setup a temp directory with .envrc
-//         let temp_dir = TempDir::new("flake-gen-test").unwrap();
-//         let temp_path = temp_dir.path().to_str().unwrap();
-//         std::fs::write(temp_dir.path().join(".envrc"), "").unwrap();
-//
-//         // Test .envrc already exists error
-//         let mut cmd = Command::cargo_bin("flake-gen").unwrap();
-//         cmd.args(["-d", "agnostic", temp_path]).assert().failure();
-//
-//         // Setup a temp directory with .gitignore
-//         let temp_dir = TempDir::new("flake-gen-test").unwrap();
-//         let temp_path = temp_dir.path().to_str().unwrap();
-//         std::fs::write(temp_dir.path().join(".gitignore"), "").unwrap();
-//
-//         // Test .gitignore already exists error
-//         let mut cmd = Command::cargo_bin("flake-gen").unwrap();
-//         cmd.args(["-g", "agnostic", temp_path]).assert().failure();
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+    use std::fs::File;
+    use std::io::Read;
+    use std::path::PathBuf;
+
+    use assert_cmd::Command;
+    use strum::IntoEnumIterator;
+    use tempdir::TempDir;
+
+    use crate::Language;
+
+    // Read all test files into memory once to avoid "too many files open" errors
+    fn read_test_files() -> HashMap<String, HashMap<String, String>> {
+        let mut test_files = HashMap::new();
+
+        for lang in Language::iter() {
+            let lang_str = lang.to_string();
+            let lang_path = format!("tests/{}", lang_str);
+
+            // Skip if the test directory doesn't exist for this language
+            if !std::path::Path::new(&lang_path).exists() {
+                continue;
+            }
+
+            let mut lang_files = HashMap::new();
+
+            // Read all_flags files
+            let all_flags_path = format!("{}/all_flags", lang_path);
+            if std::path::Path::new(&all_flags_path).exists() {
+                // Read flake.nix
+                let flake_path = format!("{}/flake.nix", all_flags_path);
+                if std::path::Path::new(&flake_path).exists() {
+                    let mut flake_content = String::new();
+                    File::open(&flake_path)
+                        .unwrap()
+                        .read_to_string(&mut flake_content)
+                        .unwrap();
+                    lang_files.insert("all_flags_flake".to_string(), flake_content);
+                }
+
+                // Read .envrc
+                let envrc_path = format!("{}/envrc", all_flags_path);
+                if std::path::Path::new(&envrc_path).exists() {
+                    let mut envrc_content = String::new();
+                    File::open(&envrc_path)
+                        .unwrap()
+                        .read_to_string(&mut envrc_content)
+                        .unwrap();
+                    lang_files.insert("all_flags_envrc".to_string(), envrc_content);
+                }
+
+                // Read .gitignore
+                let gitignore_path = format!("{}/gitignore", all_flags_path);
+                if std::path::Path::new(&gitignore_path).exists() {
+                    let mut gitignore_content = String::new();
+                    File::open(&gitignore_path)
+                        .unwrap()
+                        .read_to_string(&mut gitignore_content)
+                        .unwrap();
+                    lang_files.insert("all_flags_gitignore".to_string(), gitignore_content);
+                }
+            }
+
+            // Read no_flags files
+            let no_flags_path = format!("{}/no_flags", lang_path);
+            if std::path::Path::new(&no_flags_path).exists() {
+                // Read flake.nix
+                let flake_path = format!("{}/flake.nix", no_flags_path);
+                if std::path::Path::new(&flake_path).exists() {
+                    let mut flake_content = String::new();
+                    File::open(&flake_path)
+                        .unwrap()
+                        .read_to_string(&mut flake_content)
+                        .unwrap();
+                    lang_files.insert("no_flags_flake".to_string(), flake_content);
+                }
+            }
+
+            test_files.insert(lang_str, lang_files);
+        }
+
+        test_files
+    }
+
+    fn read_generated_file(path: PathBuf) -> String {
+        let mut content = String::new();
+        if path.exists() {
+            File::open(path)
+                .unwrap()
+                .read_to_string(&mut content)
+                .unwrap();
+        }
+        content
+    }
+
+    #[test]
+    fn test_all_languages_all_flags() {
+        // Read all test files into memory first
+        let test_files = read_test_files();
+
+        for lang in Language::iter() {
+            let lang_str = lang.to_string();
+
+            // Skip if we don't have test files for this language
+            if !test_files.contains_key(&lang_str) {
+                println!("Skipping tests for {}, no test files found", lang_str);
+                continue;
+            }
+
+            let temp_dir = TempDir::new("flake-gen-test").unwrap();
+            let temp_path = temp_dir.path().to_str().unwrap();
+
+            // Run command with all flags
+            let mut cmd = Command::cargo_bin("flake-gen").unwrap();
+            cmd.args(["-c", "-p", "-d", "-g", &lang_str, temp_path])
+                .assert()
+                .success();
+
+            // Read generated files
+            let flake_path = temp_dir.path().join("flake.nix");
+            let flake_content = read_generated_file(flake_path);
+
+            let envrc_path = temp_dir.path().join(".envrc");
+            let envrc_content = read_generated_file(envrc_path);
+
+            let gitignore_path = temp_dir.path().join(".gitignore");
+            let gitignore_content = read_generated_file(gitignore_path);
+
+            // Compare with expected content
+            let lang_files = test_files.get(&lang_str).unwrap();
+
+            if let Some(expected_flake) = lang_files.get("all_flags_flake") {
+                assert_eq!(
+                    flake_content, *expected_flake,
+                    "Generated flake.nix with all flags for {} doesn't match expected",
+                    lang_str
+                );
+            }
+
+            if let Some(expected_envrc) = lang_files.get("all_flags_envrc") {
+                assert_eq!(
+                    envrc_content, *expected_envrc,
+                    "Generated .envrc with all flags for {} doesn't match expected",
+                    lang_str
+                );
+            }
+
+            if let Some(expected_gitignore) = lang_files.get("all_flags_gitignore") {
+                assert_eq!(
+                    gitignore_content, *expected_gitignore,
+                    "Generated .gitignore with all flags for {} doesn't match expected",
+                    lang_str
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_all_languages_no_flags() {
+        // Read all test files into memory first
+        let test_files = read_test_files();
+
+        for lang in Language::iter() {
+            let lang_str = lang.to_string();
+
+            // Skip if we don't have test files for this language
+            if !test_files.contains_key(&lang_str) {
+                println!("Skipping tests for {}, no test files found", lang_str);
+                continue;
+            }
+
+            let temp_dir = TempDir::new("flake-gen-test").unwrap();
+            let temp_path = temp_dir.path().to_str().unwrap();
+
+            // Run command with no flags
+            let mut cmd = Command::cargo_bin("flake-gen").unwrap();
+            cmd.args([&lang_str, temp_path]).assert().success();
+
+            // Read generated flake.nix
+            let flake_path = temp_dir.path().join("flake.nix");
+            let flake_content = read_generated_file(flake_path);
+
+            // Compare with expected content
+            let lang_files = test_files.get(&lang_str).unwrap();
+
+            if let Some(expected_flake) = lang_files.get("no_flags_flake") {
+                assert_eq!(
+                    flake_content, *expected_flake,
+                    "Generated flake.nix with no flags for {} doesn't match expected",
+                    lang_str
+                );
+            }
+
+            // Verify that .envrc and .gitignore were not created
+            let envrc_path = temp_dir.path().join(".envrc");
+            assert!(
+                !envrc_path.exists(),
+                ".envrc should not exist for {} with no flags",
+                lang_str
+            );
+
+            let gitignore_path = temp_dir.path().join(".gitignore");
+            assert!(
+                !gitignore_path.exists(),
+                ".gitignore should not exist for {} with no flags",
+                lang_str
+            );
+        }
+    }
+
+    #[test]
+    fn test_invalid_arguments() {
+        let mut cmd = Command::cargo_bin("flake-gen").unwrap();
+        cmd.assert().failure().stderr(predicates::str::contains(
+            "required arguments were not provided",
+        ));
+
+        // Test invalid language
+        let mut cmd = Command::cargo_bin("flake-gen").unwrap();
+        cmd.arg("invalid-language")
+            .assert()
+            .failure()
+            .stderr(predicates::str::contains(
+                "invalid value 'invalid-language' for '<LANG>'",
+            ));
+
+        // Test invalid flag
+        let mut cmd = Command::cargo_bin("flake-gen").unwrap();
+        cmd.args(["-z", "agnostic"])
+            .assert()
+            .failure()
+            .stderr(predicates::str::contains("unexpected argument"));
+    }
+
+    #[test]
+    fn test_file_exists_errors() {
+        // Setup a temp directory
+        let temp_dir = TempDir::new("flake-gen-test").unwrap();
+        let temp_path = temp_dir.path().to_str().unwrap();
+
+        // Create flake.nix
+        std::fs::write(temp_dir.path().join("flake.nix"), "").unwrap();
+
+        // Test flake.nix already exists error
+        let mut cmd = Command::cargo_bin("flake-gen").unwrap();
+        cmd.args(["agnostic", temp_path]).assert().failure();
+
+        // Setup a temp directory with .envrc
+        let temp_dir = TempDir::new("flake-gen-test").unwrap();
+        let temp_path = temp_dir.path().to_str().unwrap();
+        std::fs::write(temp_dir.path().join(".envrc"), "").unwrap();
+
+        // Test .envrc already exists error
+        let mut cmd = Command::cargo_bin("flake-gen").unwrap();
+        cmd.args(["-d", "agnostic", temp_path]).assert().failure();
+
+        // Setup a temp directory with .gitignore
+        let temp_dir = TempDir::new("flake-gen-test").unwrap();
+        let temp_path = temp_dir.path().to_str().unwrap();
+        std::fs::write(temp_dir.path().join(".gitignore"), "").unwrap();
+
+        // Test .gitignore already exists error
+        let mut cmd = Command::cargo_bin("flake-gen").unwrap();
+        cmd.args(["-g", "agnostic", temp_path]).assert().failure();
+    }
+}

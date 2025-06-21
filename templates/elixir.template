@@ -20,7 +20,6 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        
         {% if package or docker_image -%}
         pname = "elixir-app"; # Default package name
         version = "0.1.0"; # Default version
@@ -42,7 +41,7 @@
         isPhoenix = false; # Set to true for Phoenix applications
         {% endif -%}
 
-        {% if package %}
+        {% if package -%}
         {% if comments -%}
         # Define your Elixir application package
         # This creates a Nix package from your Elixir project
@@ -107,7 +106,7 @@
         };
         {% endif -%}
 
-        {% if docker_image %}
+        {% if docker_image -%}
         {% if comments -%}
         # Define the Docker image for your Elixir application
         # This creates a container optimized for running Elixir/Erlang applications
@@ -175,7 +174,7 @@
             {% endif -%}
           };
         };
-        {% endif %}
+        {% endif -%}
 
       in
       {

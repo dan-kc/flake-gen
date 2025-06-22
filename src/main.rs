@@ -190,9 +190,7 @@ mod tests {
 
     use crate::Language;
 
-    // Read all test files into memory once to avoid "too many files open" errors
     fn diff(file1: PathBuf, file2: PathBuf) -> Option<String> {
-        // Get diff
         let output = Command::new("diff")
             .arg("-u")
             .arg(&file1)
@@ -200,7 +198,7 @@ mod tests {
             .output()
             .expect("Failed to run diff command");
 
-        let code = output.status.code().expect("Fialed to get err code");
+        let code = output.status.code().expect("Failed to get err code");
         if code == 0 {
             return None;
         };
@@ -218,7 +216,7 @@ mod tests {
             let temp_dir = TempDir::new("flake-gen-test").unwrap();
             let tests_dir: PathBuf = ["tests", &lang_str, "all_flags"].iter().collect();
 
-            // Run command with all flags
+            // Run flake-gen with all flags
             let mut cmd = Command::cargo_bin("flake-gen").unwrap();
             cmd.args([
                 "-c",

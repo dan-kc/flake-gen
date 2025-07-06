@@ -4,75 +4,121 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
     {
       nixpkgs,
       flake-utils,
+      fenix,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
+        # This overlay adds the Fenix Rust toolchains to nixpkgs
+        overlays = [ fenix.overlays.default ];
         pkgs = import nixpkgs {
-          inherit system;
+          inherit system overlays;
         };
-        pname = "my-app"; # Default package name
-        version = "0.1.0"; # Default version
-        src = ./.; # Assume project source is in the flake root
+        # Use the latest stable Rust toolchain for building the package
+        # You can change 'minimal' to 'complete' if you need more components
+        toolchain = fenix.packages.${system}.minimal.toolchain;
+        rustPlatform = pkgs.makeRustPlatform {
+          cargo = toolchain;
+          rustc = toolchain;
+        };
+        pname = "package_name";
+        version = "0.1.0";
+        package = rustPlatform.buildRustPackage {
+          inherit pname version;
+          src = ./.; # Assumes your Rust project is in the flake's root directory
+          cargoLock.lockFile = ./Cargo.lock;
 
-        # Define a basic package that just includes your project source
-        # This is useful if your "build" is simply copying your files
-        package = pkgs.stdenv.mkDerivation {
-          inherit pname version src;
-          # If you have a simple build step (like copying), define it here
-          # buildPhase = ''
-          #   echo "No specific build process defined"
-          # '';
-          installPhase = ''
-            mkdir -p $out/
-            cp -r $src/* $out/
-          '';
+          # Add build inputs specific to your Rust project if needed
+          # For example, if you use native libraries
+          # buildInputs = with pkgs; [ libpqxx ];
+
+          # Set environment variables during the build if necessary
+          # RUST_BACKTRACE = "1";
         };
 
-        # Define the Docker image for your application
+        # Define the Docker image
+        # This creates a layered Docker image based on your built package
+        # See https://nix.dev/tutorials/building-and-publishing-docker-images
         dockerImage = pkgs.dockerTools.buildLayeredImage {
           name = pname;
           tag = version;
 
           # Contents of the image
-          # This includes your 'package' (your project files) and any runtime dependencies
+          # You can add other necessary files here
           contents = [
-            package
-            # Add any necessary runtime dependencies here
-            # For example: pkgs.bash pkgs.coreutils
+            package # Include your built Rust binary/package
+            # Add any runtime dependencies your binary needs
+            # For example: pkgs.glibc pkgs.libpqxx
           ];
 
           # The entrypoint for your Docker container
-          # This is crucial and needs to be the command that starts your application
-          # Example: Running a script copied into the image
-          # entrypoint = [ "/run/current-system/sw/${pname}/path/to/your-script.sh" ];
-          # Example: Running a pre-compiled binary
-          # entrypoint = [ "/run/current-system/sw/${pname}/path/to/your-binary" ];
-          # You need to adjust this path based on how your 'package' derivation
-          # installs your files and where your executable/script is located.
-          entrypoint = [ "/path/to/your/entrypoint" ];
+          # This specifies what command to run when the container starts
+          # Adjust this to match your binary's location within the image
+          # By default, packages are installed in /run/current-system/sw/bin
+          # or similar paths depending on the package structure.
+          # You might need to inspect the `package` derivation to find the exact binary path.
+          entrypoint = [ "/run/current-system/sw/bin/${pname}" ];
+
+          # Optional: Set environment variables in the Docker image
+          # config.Env = [ "MY_APP_ENV=production" ];
+
+          # Optional: Expose ports
+          # config.ExposedPorts = { "8080/tcp" = {}; };
+
+          # Optional: Specify the user to run the entrypoint as
+          # config.User = "root"; # or a specific user if created in contents
         };
 
       in
       {
         # List the dependencies for your devshell
-        # Include general development tools here
+        # To enter the shell run `nix develop`
+        # Or install direnv globally, then run `direnv allow`
+        # this will install dev-dependencies whenever you enter this directory
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            nil
-            nixfmt-rfc-style
+            (fenix.packages.${system}.complete.withComponents [
+              "cargo"
+              "clippy"
+              "rustc"
+              "rustfmt"
+            ])
+            rust-analyzer
+            # rust-analyzer-nightly # If you prefer a nightly version
+            nil # Nix Language Server for Nix files
+            nixfmt-rfc-style # Nix code formatter
+            taplo # TOML formatter (for Cargo.toml)
+            # Add any other development tools here
+            # For example: git, editorconfig-checker
           ];
-        };
 
+          # Optional: Set environment variables for the dev shell
+          # shellHook = ''
+          #   export RUST_LOG=debug
+          # '';
+        };
+        # The derivation for your Rust package
+        # To build this run `nix build .` or `nix build .#package_name`
+        # See https://nix.dev/manual/nix/2.18/language/derivations.html
         packages.default = package;
 
+        # The derivation for your Docker image
+        # To build this run `nix build .#dockerImage`
+        # The resulting .tar.gz can be loaded into a Docker daemon
+        # using `docker load < result`
         packages.dockerImage = dockerImage;
+        # An app to build and load the Docker image into your local Docker daemon
+        # To run this use `nix run .#docker-build-and-load`
         apps.docker-build-and-load = flake-utils.lib.mkApp {
           drv = pkgs.writeScript "docker-build-and-load" ''
             #!/bin/sh

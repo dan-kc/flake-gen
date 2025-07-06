@@ -38,7 +38,7 @@
         pkgs = import nixpkgs {
           inherit system {% if not empty -%}overlays{%- endif%};
         };
-        {% if package %}
+        {% if package -%}
         {% if comments -%}
         # Use the latest stable Rust toolchain for building the package
         # You can change 'minimal' to 'complete' if you need more components
@@ -99,8 +99,8 @@
           # Optional: Specify the user to run the entrypoint as
           # config.User = "root"; # or a specific user if created in contents
         };
-        {% endif -%}
 
+        {% endif -%}
       in
       {
         {% if dev -%}
@@ -141,6 +141,7 @@
         # See https://nix.dev/manual/nix/2.18/language/derivations.html
         {% endif -%}
         packages.default = package;
+
         {% endif -%}
 
         {% if docker_image -%}
@@ -151,7 +152,6 @@
         # using `docker load < result`
         {% endif -%}
         packages.dockerImage = dockerImage;
-
         {% if comments -%}
         # An app to build and load the Docker image into your local Docker daemon
         # To run this use `nix run .#docker-build-and-load`

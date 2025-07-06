@@ -232,7 +232,7 @@ mod tests {
             // Compare flake
             let expected_flake = temp_dir.path().join("flake.nix");
             let actual_flake = tests_dir.join("flake.nix");
-            if let Some(diff_content) = diff(expected_flake, actual_flake) {
+            if let Some(diff_content) = diff(actual_flake, expected_flake) {
                 panic!(
                     r#"Generated flake.nix with all flags for {} doesn't match expected.
                     Diff:
@@ -286,7 +286,7 @@ mod tests {
             // Compare flake
             let expected_flake = temp_dir.path().join("flake.nix");
             let actual_flake = tests_dir.join("flake.nix");
-            if let Some(diff_content) = diff(expected_flake, actual_flake) {
+            if let Some(diff_content) = diff(actual_flake, expected_flake) {
                 panic!(
                     r#"Generated flake.nix with no flags for {} doesn't match expected.
                     Diff:

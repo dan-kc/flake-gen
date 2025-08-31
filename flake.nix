@@ -32,13 +32,16 @@
           version = "0.1.0";
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
-          nativeBuildInputs = [ pkgs.makeWrapper ];
-          buildInputs = [
+          nativeBuildInputs = [
+            pkgs.makeWrapper
             pkgs.nixfmt-rfc-style
+          ];
+          buildInputs = [
             (pkgs.writeText "set-templates-dir" ''
               export TEMPLATES_DIR=${./templates}
             '')
           ];
+          doCheck = false;
           postInstall = ''
             mkdir -p $out/share/${pname}/templates
             cp ./templates/* $out/share/${pname}/templates
@@ -67,9 +70,6 @@
               nodePackages.prettier
               taplo
             ];
-            # env = {
-            #   TEMPLATES_DIR = "./templates";
-            # };
           };
         packages.default = package;
       }

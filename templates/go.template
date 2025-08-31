@@ -21,18 +21,9 @@
           inherit system;
         };
         {% if package or docker_image -%}
-        pname = "go-app"; # Default package name
-        version = "0.1.0"; # Default version
-        src = ./.; # Assume project source is in the flake root
-        
-        {% if comments -%}
-        # Configure Go-specific build options
-        {% endif -%}
-        # For vendored dependencies
-        vendorGoMod = false; # Set to true if using 'go mod vendor'
-        # For module checksums
-        vendorSha256 = null; # Set this if not using vendorGoMod, or null to compute it
-
+        pname = "my-app";{% if comments %} # Default package name{% endif %}
+        version = "0.1.0";{% if comments %} # Default version{% endif %}
+        src = ./.;{% if comments %} # Assume project source is in the flake root{% endif %}
         {% endif -%}
         
         {% if package -%}
@@ -42,7 +33,7 @@
         {% endif -%}
         package = pkgs.buildGoModule {
           inherit pname version src;
-          inherit vendorSha256;
+          vendorSha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
           
           {% if comments -%}
           # Vendoring configuration - uncomment as needed

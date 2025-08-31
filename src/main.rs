@@ -136,7 +136,7 @@ fn main() -> Result<(), Error> {
     if cli.dev {
         let mut envrc_path = base_path.clone();
         envrc_path.push(".envrc");
-        let envrc = "use flake . -Lv";
+        let envrc = "use flake . -Lv\n";
         std::fs::write(&envrc_path, envrc)?;
         let mut permissions = std::fs::metadata(&envrc_path)?.permissions();
         permissions.set_mode(0o644);
@@ -147,7 +147,7 @@ fn main() -> Result<(), Error> {
     if cli.git {
         let mut gitignore_path = base_path.clone();
         gitignore_path.push(".gitignore");
-        let gitignore = ".direnv/";
+        let gitignore = ".direnv/\n";
         std::fs::write(&gitignore_path, gitignore)?;
         let mut permissions = std::fs::metadata(&gitignore_path)?.permissions();
         permissions.set_mode(0o644);

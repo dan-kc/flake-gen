@@ -14,9 +14,23 @@
       let
         pkgs = import nixpkgs {
           inherit system;
+          config = {
+            allowUnfree = true;
+          };
         };
       in
       {
+        devShells.default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            nil
+            nixfmt-rfc-style
+            terraform-ls
+            awscli2
+            opentofu
+            nodePackages.prettier
+            packer
+          ];
+        };
       }
     );
 }

@@ -34,7 +34,9 @@ impl std::fmt::Display for Language {
 
 #[derive(Debug)]
 enum Error {
+    #[allow(dead_code)]
     Io(std::io::Error),
+    #[allow(dead_code)]
     TemplateError(String),
     NixFmtFailed,
     NixFmtNotFound,
@@ -419,10 +421,7 @@ mod tests {
             content.contains("# Added by flake-gen"),
             "Should have flake-gen header"
         );
-        assert!(
-            content.contains(".direnv"),
-            "Should have appended content"
-        );
+        assert!(content.contains(".direnv"), "Should have appended content");
     }
 
     #[test]
@@ -470,15 +469,18 @@ mod tests {
     fn test_invalid_arguments() {
         // No language specified
         let mut cmd = flake_gen_cmd();
-        cmd.assert()
-            .failure()
-            .stderr(predicates::str::contains("required arguments were not provided"));
+        cmd.assert().failure().stderr(predicates::str::contains(
+            "required arguments were not provided",
+        ));
 
         // Invalid language
         let mut cmd = flake_gen_cmd();
-        cmd.arg("invalid-language").assert().failure().stderr(
-            predicates::str::contains("invalid value 'invalid-language' for '<LANG>'"),
-        );
+        cmd.arg("invalid-language")
+            .assert()
+            .failure()
+            .stderr(predicates::str::contains(
+                "invalid value 'invalid-language' for '<LANG>'",
+            ));
 
         // Invalid flag
         let mut cmd = flake_gen_cmd();

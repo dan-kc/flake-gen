@@ -59,7 +59,7 @@
           doCheck = false;
           postInstall = ''
             mkdir -p $out/share/${pname}/templates
-            cp ./templates/* $out/share/${pname}/templates
+            cp -r ./templates/* $out/share/${pname}/templates
           '';
           postFixup = ''
             wrapProgram $out/bin/${pname} \

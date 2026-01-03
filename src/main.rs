@@ -105,7 +105,39 @@ fn main() -> Result<(), Error> {
     let envrc_path = base_path.join(".envrc");
     append_to_file(&envrc_path, "use flake . -Lv")?;
 
+    if cli.lang == Language::Rust && !is_git_repo(&base_path) {
+        println!("Warning: The rust template requires a git repository for the helper scripts.");
+        print!("Initialize a git repository? [y/N] ");
+        std::io::stdout().flush()?;
+
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input)?;
+
+        if input.trim().eq_ignore_ascii_case("y") {
+            let status = Command::new("git")
+                .arg("init")
+                .current_dir(&base_path)
+                .status()?;
+
+            if status.success() {
+                println!("Initialized git repository.");
+                println!("Run `git add .` to track the flake files (required for Nix flakes).");
+            } else {
+                println!("Failed to initialize git repository.");
+            }
+        }
+    }
+
     Ok(())
+}
+
+fn is_git_repo(path: &PathBuf) -> bool {
+    Command::new("git")
+        .args(["rev-parse", "--git-dir"])
+        .current_dir(path)
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
 }
 
 fn read_template(path: &str) -> Result<String, Error> {

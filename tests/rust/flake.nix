@@ -7,12 +7,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
+
   outputs =
     {
       nixpkgs,
-      flake-utils,
       fenix,
-      self,
+      flake-utils,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -23,93 +23,80 @@
           inherit system overlays;
         };
 
-        ra-multiplex-port = "27630"; # CHANGE
-        ra-config = ''
-          instance_timeout = false 
-          gc_interval = 10
-          listen = ["127.0.0.1", ${ra-multiplex-port}]
-          connect = ["127.0.0.1", ${ra-multiplex-port}]
-          log_filters = "info"
-          pass_environment = []
-        '';
-
-        ra = pkgs.writeShellScriptBin "ra" ''
-          RA_MULTIPLEX_DIR="/tmp/ra-${ra-multiplex-port}"
-          CONFIG_DIR="$RA_MULTIPLEX_DIR/ra-multiplex"  
-          CONFIG_FILE="$CONFIG_DIR/config.toml"
-          LOG_DIR="/tmp/ra-multiplex"
-          LOG_FILE="$LOG_DIR/$RA_MULTIPLEX_PORT.log"
-
-          mkdir -p "$LOG_DIR"
-          mkdir -p "$CONFIG_DIR"
-          cat > "$CONFIG_FILE" <<EOF
-          ${ra-config}
-          EOF
-
-          XDG_CONFIG_HOME=$CONFIG_DIR ra-multiplex server &> "$LOG_FILE" & disown
-          echo "Listening"
-        '';
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            (fenix.packages.${system}.complete.withComponents [
-              "cargo"
-              "clippy"
-              "rustc"
-              "rustfmt"
-            ])
-            rust-analyzer
-            nil
-            nixfmt-rfc-style
-            taplo
-            ra-multiplex
-            ra
-          ];
-
-          shellHook = ''
-            export RA_MULTIPLEX_PORT="${ra-multiplex-port}"
+        env = rec {
+          LSPMUX_PORT = "8600";
+          LSPMUX_LOG_FILE = "./logs/lspmux.log";
+          LSPMUX_CONFIG = ''
+            instance_timeout = false 
+            gc_interval = 10
+            listen = ["127.0.0.1", ${LSPMUX_PORT}]
+            connect = ["127.0.0.1", ${LSPMUX_PORT}]
+            log_filters = "info"
+            pass_environment = []
           '';
         };
+        scripts = import ./scripts.nix {
+          inherit pkgs;
+          inherit env;
+        };
 
-        packages.server = pkgs.rustPlatform.buildRustPackage {
-          pname = "package-name";
-          version = "0.1.0";
+        pname = "package name";
+        version = "0.1.0";
+        toolchain = fenix.packages.${system}.minimal.toolchain;
+        rustPlatform = pkgs.makeRustPlatform {
+          cargo = toolchain;
+          rustc = toolchain;
+        };
+        package = rustPlatform.buildRustPackage {
+          inherit pname;
+          inherit version;
           src = ./.;
+          cargoLock.lockFile = ./Cargo.lock;
+          nativeBuildInputs = [
+            pkgs.makeWrapper
+            pkgs.nixfmt-rfc-style
+          ];
+          buildInputs = [
+            (pkgs.writeText "set-templates-dir" ''
+              export TEMPLATES_DIR=${./templates}
+            '')
+          ];
           doCheck = false;
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-            openssl
-          ];
-          buildInputs = with pkgs; [
-            openssl
-          ];
+          postInstall = ''
+            mkdir -p $out/share/${pname}/templates
+            cp ./templates/* $out/share/${pname}/templates
+          '';
+          postFixup = ''
+            wrapProgram $out/bin/${pname} \
+              --set TEMPLATES_DIR "$out/share/${pname}/templates" \
+              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nixfmt-rfc-style ]}
+          '';
         };
-
-        packages.server-docker = pkgs.dockerTools.buildLayeredImage {
-          name = "package-name";
-          tag = "latest";
-          contents = with pkgs; [
-            dockerTools.caCertificates
-            curl
-            self.packages.${system}.server
-          ];
-          config = {
-            Cmd = [ "${self.packages.${system}.server}/bin/habit-market-backend" ];
-            WorkingDir = "/app";
-            ExposedPorts = {
-              "80/tcp" = { };
-            };
-            Env = [
-              "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-            ];
+      in
+      {
+        devShells.default =
+          with pkgs;
+          mkShell {
+            buildInputs = [
+              (fenix.packages.${system}.complete.withComponents [
+                "cargo"
+                "clippy"
+                "rustc"
+                "rustfmt"
+              ])
+              rust-analyzer
+              lspmux
+              nil
+              nixfmt-rfc-style
+              taplo
+            ]
+            ++ scripts;
+            shellHook = ''
+              export LSPMUX_PORT="${env.LSPMUX_PORT}"
+                status 
+            '';
           };
-        };
-
-        packages.default = self.packages.${system}.server;
+        packages.default = package;
       }
     );
 }

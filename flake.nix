@@ -23,7 +23,6 @@
           inherit system overlays;
         };
 
-        # Helper scripts
         env = rec {
           # lspmux
           LSPMUX_PORT = "8600";
@@ -42,7 +41,6 @@
           inherit env;
         };
 
-        # Package
         pname = "flake-gen";
         version = "0.1.0";
         toolchain = fenix.packages.${system}.minimal.toolchain;

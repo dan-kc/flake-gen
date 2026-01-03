@@ -1,18 +1,11 @@
 use clap::{Parser, ValueEnum};
+use std::io::Write;
 use std::{os::unix::fs::PermissionsExt, path::PathBuf, process::Command};
 use strum::EnumIter;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    #[arg(short = 'c', help = "Add comments to flake.nix")]
-    comments: bool,
-    #[arg(short = 'p', help = "Add package to flake.nix")]
-    package: bool,
-    #[arg(short = 'd', help = "Add a dev shell and an .envrc file")]
-    dev: bool,
-    #[arg(short = 'g', help = "Add .gitignore file")]
-    git: bool,
     #[arg(value_enum)]
     lang: Language,
     path: Option<PathBuf>,
@@ -49,11 +42,10 @@ impl std::fmt::Display for Language {
 #[allow(dead_code)]
 enum Error {
     Io(std::io::Error),
-    NixFileAlreadyExists,
-    EnvrcFileAlreadyExists,
-    GitIgnoreAlreadyExists,
+    NixFlakeAlreadyExists,
     NixFmtFailed,
     NixFmtNotFound,
+    NotAFile,
 }
 impl From<std::io::Error> for Error {
     fn from(io_err: std::io::Error) -> Error {
@@ -72,26 +64,8 @@ fn main() -> Result<(), Error> {
     let mut flake_path = base_path.clone();
     flake_path.push("flake.nix");
     if flake_path.exists() {
-        return Err(Error::NixFileAlreadyExists);
+        return Err(Error::NixFlakeAlreadyExists);
     }
-
-    // Error if dev flag picked and .envrc exists
-    if cli.dev {
-        let mut envrc_path = base_path.clone();
-        envrc_path.push(".envrc");
-        if envrc_path.exists() {
-            return Err(Error::EnvrcFileAlreadyExists);
-        }
-    };
-
-    // Error if git flag picked and .gitignore exists
-    if cli.git {
-        let mut gitignore_path = base_path.clone();
-        gitignore_path.push(".gitignore");
-        if gitignore_path.exists() {
-            return Err(Error::GitIgnoreAlreadyExists);
-        }
-    };
 
     // If the disired path does not exist, then create it
     if let Some(ref path) = cli.path {
@@ -111,12 +85,7 @@ fn main() -> Result<(), Error> {
         }
     };
 
-    // Insert context
-    let mut context = tera::Context::new();
-    context.insert("dev", &cli.dev);
-    context.insert("package", &cli.package);
-    context.insert("comments", &cli.comments);
-    context.insert("docker_image", &cli.package); // Docker image is enabled when package is
+    let context = tera::Context::new();
 
     // Get filename
     let mut flake_template_name = cli.lang.to_string();
@@ -132,27 +101,37 @@ fn main() -> Result<(), Error> {
     // Format the flake.nix with nixfmt-rfc-style
     format_flake(&flake_path)?;
 
-    // Render and save envrc
-    if cli.dev {
-        let mut envrc_path = base_path.clone();
-        envrc_path.push(".envrc");
-        let envrc = "use flake . -Lv\n";
-        std::fs::write(&envrc_path, envrc)?;
-        let mut permissions = std::fs::metadata(&envrc_path)?.permissions();
-        permissions.set_mode(0o644);
-        std::fs::set_permissions(envrc_path, permissions)?;
-    };
+    let mut envrc_path = base_path.clone();
+    envrc_path.push(".envrc");
+    append_to_file(envrc_path, "use flake . -Lv")?;
 
-    // Render and save gitignore
-    if cli.git {
-        let mut gitignore_path = base_path.clone();
-        gitignore_path.push(".gitignore");
-        let gitignore = ".direnv/\n";
-        std::fs::write(&gitignore_path, gitignore)?;
-        let mut permissions = std::fs::metadata(&gitignore_path)?.permissions();
-        permissions.set_mode(0o644);
-        std::fs::set_permissions(gitignore_path, permissions)?;
-    };
+    let mut gitignore_path = base_path.clone();
+    gitignore_path.push(".gitignore");
+    append_to_file(gitignore_path, ".direnv")?;
+
+    Ok(())
+}
+
+fn append_to_file(path: PathBuf, base_text: &str) -> Result<(), Error> {
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)?;
+
+    // Check if the file is empty. If not, add a newline.
+    let metadata = file.metadata()?;
+    let mut prefix = "";
+    if metadata.len() > 0 {
+        prefix = "\n#Added by flake-gen\n";
+    }
+
+    let text = prefix.to_string() + base_text;
+    let buf = text.as_bytes();
+    let _ = file.write(buf)?;
+
+    let mut permissions = std::fs::metadata(&path)?.permissions();
+    permissions.set_mode(0o644);
+    std::fs::set_permissions(path, permissions)?;
 
     Ok(())
 }

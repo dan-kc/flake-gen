@@ -4,7 +4,7 @@ let
     # Start development environment
     start = pkgs.writeShellScriptBin "start" ''
       set -e
-      ROOT="$PWD"
+      ROOT="$(git rev-parse --show-toplevel)"
 
       mkdir -p "$ROOT/logs"
       touch "$ROOT/logs/lspmux.log"
@@ -20,9 +20,7 @@ let
         CONFIG_DIR="$LSPMUX_DIR/lspmux"
         CONFIG_FILE="$CONFIG_DIR/config.toml"
         mkdir -p "$CONFIG_DIR"
-        cat > "$CONFIG_FILE" <<EOF
-        ${env.LSPMUX_CONFIG}
-      EOF
+        printf '%s\n' '${env.LSPMUX_CONFIG}' > "$CONFIG_FILE"
         XDG_CONFIG_HOME=$LSPMUX_DIR nohup lspmux server &> "$ROOT/logs/lspmux.log" &
         echo $! > "$ROOT/.lspmux.pid"
         disown
@@ -36,7 +34,8 @@ let
 
     # Stop development environment
     stop = pkgs.writeShellScriptBin "stop" ''
-      ROOT="$PWD"
+      set -e
+      ROOT="$(git rev-parse --show-toplevel)"
       echo "Stopping services..."
 
       # LSP Mux
@@ -52,7 +51,8 @@ let
 
     # Show status of all services
     status = pkgs.writeShellScriptBin "status" ''
-      ROOT="$PWD"
+      set -e
+      ROOT="$(git rev-parse --show-toplevel)"
       echo "Service Status:"
       echo ""
 

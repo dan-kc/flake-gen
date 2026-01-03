@@ -56,11 +56,6 @@
             pkgs.makeWrapper
             pkgs.nixfmt-rfc-style
           ];
-          buildInputs = [
-            (pkgs.writeText "set-templates-dir" ''
-              export TEMPLATES_DIR=${./templates}
-            '')
-          ];
           doCheck = false;
           postInstall = ''
             mkdir -p $out/share/${pname}/templates

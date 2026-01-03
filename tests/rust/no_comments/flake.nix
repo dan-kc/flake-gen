@@ -27,7 +27,7 @@
           LSPMUX_PORT = "8600";
           LSPMUX_LOG_FILE = "./logs/lspmux.log";
           LSPMUX_CONFIG = ''
-            instance_timeout = false 
+            instance_timeout = false
             gc_interval = 10
             listen = ["127.0.0.1", ${LSPMUX_PORT}]
             connect = ["127.0.0.1", ${LSPMUX_PORT}]
@@ -40,7 +40,7 @@
           inherit env;
         };
 
-        pname = "package name";
+        pname = "my-project";
         version = "0.1.0";
         toolchain = fenix.packages.${system}.minimal.toolchain;
         rustPlatform = pkgs.makeRustPlatform {
@@ -52,25 +52,6 @@
           inherit version;
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
-          nativeBuildInputs = [
-            pkgs.makeWrapper
-            pkgs.nixfmt-rfc-style
-          ];
-          buildInputs = [
-            (pkgs.writeText "set-templates-dir" ''
-              export TEMPLATES_DIR=${./templates}
-            '')
-          ];
-          doCheck = false;
-          postInstall = ''
-            mkdir -p $out/share/${pname}/templates
-            cp ./templates/* $out/share/${pname}/templates
-          '';
-          postFixup = ''
-            wrapProgram $out/bin/${pname} \
-              --set TEMPLATES_DIR "$out/share/${pname}/templates" \
-              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nixfmt-rfc-style ]}
-          '';
         };
       in
       {
@@ -85,15 +66,14 @@
                 "rustfmt"
               ])
               rust-analyzer
-              lspmux
               nil
               nixfmt-rfc-style
-              taplo
+              lspmux
             ]
             ++ scripts;
             shellHook = ''
               export LSPMUX_PORT="${env.LSPMUX_PORT}"
-                status 
+              status
             '';
           };
         packages.default = package;

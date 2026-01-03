@@ -1,6 +1,5 @@
 /target
 .direnv
 result
-.aider*
 /logs
 .lspmux.pid

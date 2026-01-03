@@ -1,0 +1,12 @@
+# Nix/direnv
+.direnv
+
+# Rust build artifacts
+target/
+
+# Logs
+logs/
+*.log
+
+# PID files
+.lspmux.pid

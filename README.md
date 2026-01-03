@@ -1,70 +1,94 @@
 ## Summary
 
-`flake-gen` is a Nix flake generator, conceptually similar to the [Official Nix Templates](https://github.com/NixOS/templates). It is designed to address specific requirements and preferences:
+`flake-gen` is a Nix flake generator for quickly bootstrapping development environments.
 
-- **Dev Shell Centric:** Language servers and formatters are included directly within the generated development shell. This is particularly useful for users of minimal NixOS environments who prefer not to install language-specific dependencies globally.
-- **Strictly essential files only:** This project focuses _only_ on generating the `flake.nix` and `.envrc` and `.gitignore` files, avoiding the inclusion of any code within the generated output.
-- **No GitHub Actions**
+- **Dev Shell Centric:** Language servers and formatters are included directly within the generated development shell
+- **Essential files only:** Generates `flake.nix`, `.envrc`, `.gitignore`, and language-specific helpers (like `scripts.nix` for Rust)
+- **LSP Multiplexer support:** The Rust template includes [lspmux](https://github.com/nix-community/lspmux) integration for better IDE performance
 
-Additionally, `flake-gen` incorporates some personal preferences. For example the `rust` subcommand uses [fenix](https://github.com/nix-community/fenix) in order to get the latest Rust toolchain instead of `nixpkgs` which is often stale.
+## Supported Languages
 
-I intend to add add support for more languages as and when I need them.
-
-## Currently supported languages
-
-- Agnostic (produces generic language-agnostic files)
-- Rust
+- `agnostic` - Generic language-agnostic flake
+- `rust` - Rust with [fenix](https://github.com/nix-community/fenix) toolchain and lspmux
 
 ## Usage
 
-`flake-gen {language} {path}` will generate a flake.nix for the specified language in the specified path. The default flake is pretty bare bones, you can add some option flags to flesh out the template: `flake-gen rust ./test_dir -dpcg`.
+```
+flake-gen <language> [path]
+```
 
-### Full list of options:
+### Examples
 
-- `-d` (Adds a devshell to the flake and a `.envrc` file)
-- `-p` (Adds a project to the flake. You can build the project with `nix build .`)
-- `-c` (Adds helpful comments throughout the flake)
-- `-g` (Adds a `.gitignore` file)
+```bash
+# Generate rust flake in current directory
+flake-gen rust
+
+# Same as above (. means current directory)
+flake-gen rust .
+
+# Generate in a new project folder
+flake-gen rust my-project
+
+# Include comments in generated files
+flake-gen -c rust my-project
+```
+
+### Options
+
+- `-c, --comments` - Include helpful comments in generated files
+
+### Generated Files
+
+**Rust:**
+- `flake.nix` - Nix flake with fenix toolchain and lspmux
+- `scripts.nix` - Helper scripts for managing lspmux (start/stop/status)
+- `.envrc` - direnv configuration
+- `.gitignore` - Common ignores for Rust/Nix projects
+
+**Agnostic:**
+- `flake.nix` - Basic Nix flake with empty devShell
+- `.envrc` - direnv configuration
+- `.gitignore` - Common ignores for Nix projects
+
+### File Collision Handling
+
+- If `flake.nix` or `scripts.nix` already exists, creates `flake_1.nix`, `flake_2.nix`, etc.
+- If `.envrc` or `.gitignore` already exists, appends the new content
 
 ## Installation
 
-This project is only available via nix flakes.
+### Via Nix Flakes
 
-### Step 1: Add the input to your flake.nix
+Add to your flake inputs:
 
-```
+```nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-gen.url = "github:dan-kc/flake-gen";
-  }
-...
+  };
+  # ...
+}
 ```
 
-### Step 2: In your configuration.nix, overlay nixpkgs
+Then either:
 
-```
-  nixpkgs.overlays = [
-    (final: prev: {
-      flake-gen = inputs.flake-gen.packages."${pkgs.system}".default;
-    })
-  ];
-```
+**Option A: Add to system packages via overlay**
 
-### Step 3: In your configuration.nix again, install the package
+```nix
+nixpkgs.overlays = [
+  (final: prev: {
+    flake-gen = inputs.flake-gen.packages."${pkgs.system}".default;
+  })
+];
 
-```
-  environment.systemPackages = with pkgs; [
-    flake-gen
-  ];
+environment.systemPackages = with pkgs; [
+  flake-gen
+];
 ```
 
-## Development
+**Option B: Run directly**
 
-### Todo:
-
-- Make the default project name to be the curr dir name.
-- Add Rust
-- Add Go
-- Add Ts
-- Make it available for other platforms
+```bash
+nix run github:dan-kc/flake-gen -- rust .
+```

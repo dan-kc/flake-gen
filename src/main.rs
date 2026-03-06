@@ -21,6 +21,7 @@ struct Cli {
 enum Language {
     Agnostic,
     Rust,
+    Typescript,
 }
 
 impl std::fmt::Display for Language {
@@ -28,6 +29,7 @@ impl std::fmt::Display for Language {
         match self {
             Language::Agnostic => write!(f, "agnostic"),
             Language::Rust => write!(f, "rust"),
+            Language::Typescript => write!(f, "typescript"),
         }
     }
 }
@@ -552,5 +554,73 @@ mod tests {
             temp_dir.path().join("flake.nix").exists(),
             "flake.nix should exist in current dir"
         );
+    }
+
+    #[test]
+    fn test_typescript_with_comments() {
+        let temp_dir = TempDir::new("flake-gen-test").unwrap();
+        let tests_dir: PathBuf = ["tests", "typescript", "with_comments"].iter().collect();
+
+        let mut cmd = flake_gen_cmd();
+        cmd.args(["-c", "typescript", temp_dir.path().to_str().unwrap()])
+            .assert()
+            .success();
+
+        // Compare flake
+        let expected_flake = temp_dir.path().join("flake.nix");
+        let actual_flake = tests_dir.join("flake.nix");
+        if let Some(diff_content) = diff(actual_flake, expected_flake) {
+            panic!(
+                "Generated flake.nix with comments for typescript doesn't match expected.\nDiff:\n{}",
+                diff_content
+            )
+        };
+
+        // Verify no scripts.nix created
+        assert!(
+            !temp_dir.path().join("scripts.nix").exists(),
+            "scripts.nix should not exist for typescript"
+        );
+
+        // Compare gitignore
+        let expected_gitignore = temp_dir.path().join(".gitignore");
+        let actual_gitignore = tests_dir.join("gitignore");
+        if let Some(diff_content) = diff(expected_gitignore, actual_gitignore) {
+            panic!(
+                "Generated gitignore with comments for typescript doesn't match expected.\nDiff:\n{}",
+                diff_content
+            )
+        };
+
+        // Compare envrc
+        let expected_envrc = temp_dir.path().join(".envrc");
+        let actual_envrc = tests_dir.join("envrc");
+        if let Some(diff_content) = diff(expected_envrc, actual_envrc) {
+            panic!(
+                "Generated envrc with comments for typescript doesn't match expected.\nDiff:\n{}",
+                diff_content
+            )
+        };
+    }
+
+    #[test]
+    fn test_typescript_no_comments() {
+        let temp_dir = TempDir::new("flake-gen-test").unwrap();
+        let tests_dir: PathBuf = ["tests", "typescript", "no_comments"].iter().collect();
+
+        let mut cmd = flake_gen_cmd();
+        cmd.args(["typescript", temp_dir.path().to_str().unwrap()])
+            .assert()
+            .success();
+
+        // Compare flake
+        let expected_flake = temp_dir.path().join("flake.nix");
+        let actual_flake = tests_dir.join("flake.nix");
+        if let Some(diff_content) = diff(actual_flake, expected_flake) {
+            panic!(
+                "Generated flake.nix without comments for typescript doesn't match expected.\nDiff:\n{}",
+                diff_content
+            )
+        };
     }
 }

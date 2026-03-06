@@ -1,0 +1,6 @@
+# Nix/direnv
+.direnv
+
+# Node.js
+node_modules/
+dist/

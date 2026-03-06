@@ -23,22 +23,7 @@
           inherit system overlays;
         };
 
-        env = rec {
-          LSPMUX_PORT = "8600";
-          LSPMUX_LOG_FILE = "./logs/lspmux.log";
-          LSPMUX_CONFIG = ''
-            instance_timeout = false 
-            gc_interval = 10
-            listen = ["127.0.0.1", ${LSPMUX_PORT}]
-            connect = ["127.0.0.1", ${LSPMUX_PORT}]
-            log_filters = "info"
-            pass_environment = []
-          '';
-        };
-        scripts = import ./scripts.nix {
-          inherit pkgs;
-          inherit env;
-        };
+        scripts = import ./scripts.nix { inherit pkgs; };
 
         pname = "flake-gen";
         version = "0.1.0";
@@ -88,8 +73,21 @@
             ]
             ++ scripts;
             shellHook = ''
-              export LSPMUX_PORT="${env.LSPMUX_PORT}"
-                status 
+              start() {
+                command start
+                if [ -f "$(git rev-parse --show-toplevel)/.lspmux.port" ]; then
+                  export LSPMUX_PORT=$(cat "$(git rev-parse --show-toplevel)/.lspmux.port")
+                fi
+              }
+              stop() {
+                command stop
+                unset LSPMUX_PORT
+              }
+              ROOT="$(git rev-parse --show-toplevel)"
+              if [ -f "$ROOT/.lspmux.port" ] && [ -f "$ROOT/.lspmux.pid" ] && kill -0 $(cat "$ROOT/.lspmux.pid") 2>/dev/null; then
+                export LSPMUX_PORT=$(cat "$ROOT/.lspmux.port")
+              fi
+              status
             '';
           };
         packages.default = package;

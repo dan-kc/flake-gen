@@ -10,3 +10,4 @@ logs/
 
 # PID files
 .lspmux.pid
+.lspmux.port

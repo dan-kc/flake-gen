@@ -1,5 +1,5 @@
 # Helper scripts for managing lspmux
-{ pkgs, env }:
+{ pkgs }:
 let
   scripts = rec {
     # Start lspmux server
@@ -16,11 +16,32 @@ let
         echo "  lspmux already running"
       else
         echo "  Starting lspmux..."
-        LSPMUX_DIR="/tmp/ra-${env.LSPMUX_PORT}"
+        # Find an available port
+        LSPMUX_PORT=""
+        for port in $(seq 49152 49252); do
+          if ! ${pkgs.iproute2}/bin/ss -tln | grep -q ":$port "; then
+            LSPMUX_PORT=$port
+            break
+          fi
+        done
+        if [ -z "$LSPMUX_PORT" ]; then
+          echo "  Error: no available port found in range 49152-49252"
+          exit 1
+        fi
+        echo "$LSPMUX_PORT" > "$ROOT/.lspmux.port"
+
+        LSPMUX_DIR="/tmp/ra-$LSPMUX_PORT"
         CONFIG_DIR="$LSPMUX_DIR/lspmux"
         CONFIG_FILE="$CONFIG_DIR/config.toml"
         mkdir -p "$CONFIG_DIR"
-        printf '%s\n' '${env.LSPMUX_CONFIG}' > "$CONFIG_FILE"
+        {
+          echo "instance_timeout = false"
+          echo "gc_interval = 10"
+          echo "listen = [\"127.0.0.1\", $LSPMUX_PORT]"
+          echo "connect = [\"127.0.0.1\", $LSPMUX_PORT]"
+          echo "log_filters = \"info\""
+          echo "pass_environment = []"
+        } > "$CONFIG_FILE"
         XDG_CONFIG_HOME=$LSPMUX_DIR nohup lspmux server &> "$ROOT/logs/lspmux.log" &
         echo $! > "$ROOT/.lspmux.pid"
         disown
@@ -40,9 +61,11 @@ let
 
       if [ -f "$ROOT/.lspmux.pid" ] && kill $(cat "$ROOT/.lspmux.pid") 2>/dev/null; then
         rm -f "$ROOT/.lspmux.pid"
+        rm -f "$ROOT/.lspmux.port"
         echo "  lspmux stopped"
       else
         rm -f "$ROOT/.lspmux.pid"
+        rm -f "$ROOT/.lspmux.port"
         echo "  lspmux not running"
       fi
       echo "Done."
@@ -56,7 +79,8 @@ let
       echo ""
 
       if [ -f "$ROOT/.lspmux.pid" ] && kill -0 $(cat "$ROOT/.lspmux.pid") 2>/dev/null; then
-        echo "  lspmux: running on localhost:${env.LSPMUX_PORT}"
+        PORT=$(cat "$ROOT/.lspmux.port" 2>/dev/null || echo "unknown")
+        echo "  lspmux: running on localhost:$PORT"
       else
         echo "  lspmux: stopped"
       fi
